@@ -1,0 +1,14 @@
+name: esb-core
+
+include:
+  - core/elasticsearch/docker-compose.yml
+  - core/grafana/docker-compose.yml
+  - core/jaeger/docker-compose.yml
+  - core/kafka/docker-compose.yml
+  - core/postgres/docker-compose.yml
+  - core/prometheus/docker-compose.yml
+
+networks:
+  esb_network:
+    driver: bridge
+    name: esb_network

@@ -1,0 +1,18 @@
+services:
+  grafana:
+    image: grafana/grafana:10.3.3
+    container_name: ${COMPOSE_PROJECT_NAME}-grafana
+    env_file:
+      - .env
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    networks:
+      - esb_network
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+volumes:
+  grafana_data:

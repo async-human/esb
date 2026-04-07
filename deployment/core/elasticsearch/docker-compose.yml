@@ -1,0 +1,24 @@
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
+    container_name: ${COMPOSE_PROJECT_NAME}-elasticsearch
+    env_file:
+      - .env
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms${ELASTIC_MEMORY:-512m} -Xmx${ELASTIC_MEMORY:-512m}"
+    ports:
+      - "${ELASTIC_PORT:-9200}:9200"
+    networks:
+      - esb_network
+    volumes:
+      - elastic_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200 >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  elastic_data:

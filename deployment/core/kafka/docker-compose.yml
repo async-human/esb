@@ -1,0 +1,43 @@
+services:
+  kafka:
+    image: apache/kafka:4.2.0
+    container_name: ${COMPOSE_PROJECT_NAME}-kafka
+    env_file:
+      - .env
+    environment:
+      - KAFKA_NODE_ID=1
+      - KAFKA_PROCESS_ROLES=controller,broker
+      - KAFKA_LISTENERS=PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+      - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER      
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
+      - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
+      
+      - KAFKA_LOG_DIRS=/var/lib/kafka/data
+
+      - CLUSTER_ID=${KAFKA_CLUSTER_ID:-5L6g3nShT-eMCtK--X86sw}
+    ports:
+      - "${KAFKA_BROKER_PORT:-9092}:9092"
+    networks:
+      - esb_network
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: ${COMPOSE_PROJECT_NAME}-kafka-ui
+    ports:
+      - "${KAFKA_UI_PORT:-8080}:8080"
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=esb-local
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
+    networks:
+      - esb_network
+    depends_on:
+      - kafka
+
+volumes:
+  kafka_data:

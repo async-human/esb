@@ -1,0 +1,40 @@
+version: '3'
+
+vars:
+  DEPLOY_DIR: deployment
+  GLOBAL_ENV: "{{.DEPLOY_DIR}}/.env"
+
+tasks:
+  default:
+    desc: "Показать доступные команды"
+    cmds:
+      - task -l
+
+  infra:env:
+    desc: "Генерация локальных .env файлов для компонентов"
+    preconditions:
+      - sh: test -f {{.GLOBAL_ENV}}
+        msg: "ОШИБКА: Глобальный файл {{.GLOBAL_ENV}} не найден!"
+    cmds:
+      - echo "==> Генерация локальных .env файлов..."
+      - python scripts/generate_envs.py "{{.DEPLOY_DIR}}" "{{.GLOBAL_ENV}}"
+
+  infra:up:
+    desc: "Поднять всю локальную инфраструктуру"
+    deps: [infra:env] # Зависим напрямую от генерации env
+    dir: "{{.DEPLOY_DIR}}"
+    cmds:
+      - docker compose up -d
+      - echo "==> Инфраструктура успешно запущена!"
+
+  infra:down:
+    desc: "Остановить и удалить контейнеры инфраструктуры"
+    dir: "{{.DEPLOY_DIR}}"
+    cmds:
+      - docker compose down
+      
+  infra:clean:
+    desc: "Удалить сгенерированные файлы (clean up)"
+    cmds:
+      - rm -f {{.DEPLOY_DIR}}/core/*/.env
+      - echo "==> Сгенерированные файлы удалены."

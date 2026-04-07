@@ -1,0 +1,16 @@
+services:
+  prometheus:
+    image: prom/prometheus:v2.49.0
+    container_name: ${COMPOSE_PROJECT_NAME}-prometheus
+    env_file:
+      - .env
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    networks:
+      - esb_network
+
+volumes:
+  prometheus_data:

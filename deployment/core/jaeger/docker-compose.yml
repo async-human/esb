@@ -1,0 +1,13 @@
+services:
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: ${COMPOSE_PROJECT_NAME}-jaeger
+    env_file:
+      - .env
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - "${JAEGER_UI_PORT:-16686}:16686"   # UI для просмотра трейсов
+      - "${JAEGER_OTLP_PORT:-4317}:4317" # Порт для приема OTLP gRPC от микросервисов
+    networks:
+      - esb_network
