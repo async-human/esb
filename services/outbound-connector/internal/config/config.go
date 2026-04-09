@@ -10,9 +10,10 @@ import (
 var commonAppConfig *config
 
 type config struct {
-	Logger LoggerConfig
-	App    AppConfig
-	Otel   OtelConfig
+	Logger       LoggerConfig
+	App          AppConfig
+	Otel         OtelConfig
+	MetricConfig MetricServerConfig
 }
 
 func Load(path ...string) error {
@@ -37,10 +38,16 @@ func Load(path ...string) error {
 		return err
 	}
 
+	metricCfg, err := env.NewMetricConfig()
+	if err != nil {
+		return err
+	}
+
 	commonAppConfig = &config{
-		Logger: loggerCfg,
-		App: appCfg,
-		Otel: otelCfg,
+		Logger:       loggerCfg,
+		App:          appCfg,
+		Otel:         otelCfg,
+		MetricConfig: metricCfg,
 	}
 
 	return nil

@@ -1,7 +1,6 @@
 package config
 
-import (
-)
+import "time"
 
 type LoggerConfig interface {
 	Level() string
@@ -17,4 +16,9 @@ type AppConfig interface {
 	ServiceName() string
 	Environment() string
 	ServiceVersion() string
+}
+
+type MetricServerConfig interface {
+	CollectorEndpoint() string
+	CollectorInterval() time.Duration
 }

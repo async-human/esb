@@ -2,10 +2,13 @@ package app
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/async-human/esb/platform/closer"
 	"github.com/async-human/esb/platform/logger"
+	metricsPlatform "github.com/async-human/esb/platform/metrics"
 	"github.com/async-human/esb/router-worker/internal/config"
+	"github.com/async-human/esb/router-worker/internal/metrics"
 )
 
 type App struct {
@@ -30,7 +33,11 @@ func (a *App) Run(ctx context.Context) error {
 	logger.Warn(ctx, "⚠️ [WARN] Router Worker: проверка уровня логирования WARN")
 	logger.Error(ctx, "❌ [ERROR] Router Worker: проверка уровня логирования ERROR")
 
+	metrics.AppStartsTotal.Add(ctx, 1)
+
 	<-ctx.Done()
+
+	metrics.AppEndTotal.Add(ctx, 1)
 
 	logger.Info(ctx, "Shutdown signal received")
 
@@ -42,6 +49,7 @@ func (a *App) initDeps(ctx context.Context) error {
 	inits := []func(context.Context) error{
 		a.initDI,
 		a.initLogger,
+		a.initMetrics,
 		a.initCloser,
 	}
 
@@ -79,6 +87,18 @@ func (a *App) initLogger(ctx context.Context) error {
 }
 
 func (a *App) initCloser(_ context.Context) error {
+	
 	closer.SetLogger(logger.Logger())
+	closer.AddNamed("metrics", metricsPlatform.Shutdown)
+
+	return nil
+}
+
+func (a *App) initMetrics(ctx context.Context) error {
+	err := metricsPlatform.InitProvider(ctx, config.CommonAppConfig().MetricConfig)
+	if err != nil {
+		return fmt.Errorf("failed to init metrics: %w", err)
+	}
+
 	return nil
 }
