@@ -1,0 +1,14 @@
+services:
+  management-api:
+    build:
+      context: ../..
+      dockerfile: deployment/management-api/Dockerfile
+    container_name: ${COMPOSE_PROJECT_NAME}-management-api
+    env_file:
+      - .env
+    working_dir: /app
+    networks:
+      - esb_network
+    depends_on:
+      otel-collector:
+        condition: service_started

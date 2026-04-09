@@ -1,0 +1,87 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+exporters:
+  elasticsearch/logs:
+    endpoints: ["http://elasticsearch:9200"]
+    # Создаем новый индекс каждый день.
+    # Это позволит настроить ILM (удаление логов старше 14 дней) в самом Elastic.
+    logs_index: "esb-logs"
+    logstash_format:
+      enabled: true
+      prefix_separator: "-"
+      date_format: "%Y.%m.%d"
+    mapping:
+      mode: ecs
+    flush:
+      interval: 1s
+    retry:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+    sending_queue:
+      enabled: true
+      num_consumers: 10
+      queue_size: 1000
+
+  otlp/jaeger:
+    endpoint: "jaeger:4317"
+    tls:
+      insecure: true
+    retry_on_failure:
+      enabled: true
+
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+
+processors:
+  # 1. Защита памяти
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 1000 # Максимум 1GB RAM под коллектор
+    spike_limit_mib: 200 # Жесткий лимит при резком скачке трафика
+
+  # 2. Обогащение: Добавляет инфу об ОС, хосте и Docker
+  resourcedetection:
+    detectors: [env, system, docker]
+    timeout: 2s
+    override: false
+
+  # 3. Батчинг
+  batch:
+    timeout: 5s
+    send_batch_size: 512
+    send_batch_max_size: 1024
+
+# Расширения для мониторинга самого Collector'a
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133 # По этому порту балансировщик/k8s будет проверять жив ли коллектор
+  pprof:
+    endpoint: 0.0.0.0:1777 # Для дебага утечек памяти
+
+service:
+  extensions: [health_check, pprof]
+  telemetry:
+    logs:
+      level: "info" # В проде debug генерирует слишком много мусора от самого коллектора
+  pipelines:
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, resourcedetection, batch]
+      exporters: [elasticsearch/logs]
+
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, resourcedetection, batch]
+      exporters: [otlp/jaeger]
+
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, resourcedetection, batch]
+      exporters: [prometheus]
