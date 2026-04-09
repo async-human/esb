@@ -87,8 +87,9 @@ func (a *App) initLogger(ctx context.Context) error {
 }
 
 func (a *App) initCloser(_ context.Context) error {
-	
+
 	closer.SetLogger(logger.Logger())
+	closer.AddNamed("logger", logger.Shutdown)
 	closer.AddNamed("metrics", metricsPlatform.Shutdown)
 
 	return nil

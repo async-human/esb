@@ -24,9 +24,11 @@ const (
 )
 
 var (
-	globalLogger *logger
-	once         sync.Once
-	dynamicLevel zap.AtomicLevel // Позволяет изменять уровень логирования без перезапуска
+	globalLogger   *logger
+	once           sync.Once
+	dynamicLevel   zap.AtomicLevel        // Позволяет изменять уровень логирования без перезапуска
+	globalProvider *sdklog.LoggerProvider // Глобальный провайдер для корректного завершения
+	providerMu     sync.RWMutex           // Мьютекс для безопасного доступа к провайдеру
 )
 
 // logger обёртка над zap.Logger с enrich поддержкой контекста
@@ -122,6 +124,11 @@ func createOTLPLogger(ctx context.Context, cfg Config) (log.Logger, error) {
 		sdklog.WithProcessor(sdklog.NewBatchProcessor(exporter)),
 	)
 
+	// Сохраняем провайдер глобально для корректного завершения
+	providerMu.Lock()
+	globalProvider = provider
+	providerMu.Unlock()
+
 	// Возвращаем логер, привязанный к имени нашего сервиса
 	return provider.Logger(cfg.ServiceName()), nil
 }
@@ -166,6 +173,21 @@ func SetLevel(level zapcore.Level) {
 // GetLevel возвращает текущий уровень логирования
 func GetLevel() zapcore.Level {
 	return dynamicLevel.Level()
+}
+
+// Shutdown корректно завершает работу OTel LoggerProvider,
+// сбрасывая буферизованные логи перед выходом.
+// Должна вызываться при graceful shutdown приложения.
+func Shutdown(ctx context.Context) error {
+	providerMu.RLock()
+	provider := globalProvider
+	providerMu.RUnlock()
+
+	if provider == nil {
+		return nil
+	}
+
+	return provider.Shutdown(ctx)
 }
 
 func InitForBenchmark(ctx context.Context, cfg Config) {
