@@ -1,0 +1,16 @@
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.95.0
+    container_name: ${COMPOSE_PROJECT_NAME}-otel-collector
+    env_file:
+      - .env
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    volumes:
+      - ./otel-config.yaml:/etc/otelcol-contrib/config.yaml:ro
+    ports:
+      - "${OTEL_RECEIVER_OTLP_GRPC_PORT:-4317}:4317" # Порт Go-приложения
+    networks:
+      - esb_network
+    depends_on:
+      elasticsearch:
+        condition: service_healthy

@@ -2,11 +2,17 @@ name: esb-core
 
 include:
   - core/elasticsearch/docker-compose.yml
+  - core/kibana/docker-compose.yml
   - core/grafana/docker-compose.yml
   - core/jaeger/docker-compose.yml
   - core/kafka/docker-compose.yml
   - core/postgres/docker-compose.yml
   - core/prometheus/docker-compose.yml
+  - core/otel/docker-compose.yml
+  - router-worker/docker-compose.yml
+  - outbound-connector/docker-compose.yml
+  - management-api/docker-compose.yml
+  - inbound-connector/docker-compose.yml
 
 networks:
   esb_network:

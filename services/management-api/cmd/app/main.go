@@ -7,15 +7,15 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/async-human/esb/management-api/internal/app"
+	"github.com/async-human/esb/management-api/internal/config"
 	"github.com/async-human/esb/platform/closer"
 	"github.com/async-human/esb/platform/logger"
-	"github.com/async-human/esb/router-worker/internal/app"
-	"github.com/async-human/esb/router-worker/internal/config"
 	"go.uber.org/zap"
 )
 
 const (
-	configPath = "./deployment/router-worker/.env"
+	configPath = "./deployment/management-api/.env"
 )
 
 func main() {

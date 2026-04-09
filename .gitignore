@@ -1,0 +1,36 @@
+# --- Бинарные файлы и сборка ---
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Игнорируем папку bin в корне и внутри сервисов
+bin/
+**/bin/
+
+# --- Локальные переменные и секреты ---
+**.env
+
+# --- IDE и редакторы ---
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# --- Логи и временные файлы ---
+*.log
+tmp/
+**/tmp/
+
+# --- Инструменты покрытия тестами ---
+*.coverprofile
+coverage.txt
+*settings.json*
+
+# Go Workspaces (локальные настройки)
+go.work
+go.work.sum
