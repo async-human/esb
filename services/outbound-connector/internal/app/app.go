@@ -9,6 +9,7 @@ import (
 	"github.com/async-human/esb/platform/closer"
 	"github.com/async-human/esb/platform/logger"
 	metricsPlatform "github.com/async-human/esb/platform/metrics"
+	"github.com/async-human/esb/platform/tracing"
 )
 
 type App struct {
@@ -34,9 +35,11 @@ func (a *App) Run(ctx context.Context) error {
 	logger.Error(ctx, "❌ [ERROR] Outbound Connector: проверка уровня логирования ERROR")
 
 	metrics.AppStartsTotal.Add(ctx, 1)
+	_, span := tracing.StartSpan(ctx, "start.outbound-connector")
 
 	<-ctx.Done()
 
+	span.End()
 	metrics.AppEndTotal.Add(ctx, 1)
 
 	logger.Info(ctx, "Shutdown signal received")
@@ -50,7 +53,7 @@ func (a *App) initDeps(ctx context.Context) error {
 		a.initDI,
 		a.initLogger,
 		a.initMetrics,
-		a.initCloser,
+		a.initTracing,
 	}
 
 	for _, f := range inits {
@@ -80,19 +83,15 @@ func (a *App) initLogger(ctx context.Context) error {
 		AppConfig:    config.CommonAppConfig().App,
 	}
 
-	return logger.Init(
+	loggerItem := logger.Init(
 		ctx,
 		initLoggerConfig,
 	)
-}
-
-func (a *App) initCloser(_ context.Context) error {
 
 	closer.SetLogger(logger.Logger())
 	closer.AddNamed("logger", logger.Shutdown)
-	closer.AddNamed("metrics", metricsPlatform.Shutdown)
 
-	return nil
+	return loggerItem
 }
 
 func (a *App) initMetrics(ctx context.Context) error {
@@ -100,6 +99,29 @@ func (a *App) initMetrics(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to init metrics: %w", err)
 	}
+
+	closer.AddNamed("metrics", metricsPlatform.Shutdown)
+
+	return nil
+}
+
+
+func (a *App) initTracing(ctx context.Context) error {
+
+	initTracingCfg := struct{
+		config.OtelConfig
+		config.AppConfig
+	}{
+		OtelConfig: config.CommonAppConfig().Otel,
+		AppConfig:  config.CommonAppConfig().App,
+	}
+
+	err := tracing.InitTracer(ctx, initTracingCfg)
+	if err != nil {
+		return err
+	}
+
+	closer.AddNamed("tracing", tracing.ShutdownTracer)
 
 	return nil
 }
