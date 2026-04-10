@@ -1,0 +1,13 @@
+type: object
+required:
+  - id
+  - payload
+properties:
+  id:
+    type: string
+    format: uuid
+    description: Уникальный идентификатор сообщения
+  payload:
+    type: object
+    additionalProperties: true
+    description: Произвольные данные

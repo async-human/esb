@@ -6,6 +6,8 @@ services:
     container_name: ${COMPOSE_PROJECT_NAME}-inbound-connector
     env_file:
       - .env
+    ports:
+      - "${INBOUND_CONNECTOR_PORT:-8081}:8080"
     working_dir: /app
     networks:
       - esb_network

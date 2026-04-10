@@ -1,0 +1,12 @@
+openapi: 3.0.3
+info:
+  title: Inbound Connector API
+  version: 1.0.0
+  description: API для приема входящих событий из внешних систем.
+servers:
+  - url: /api/v1/inbound
+paths:
+  /messages:
+    $ref: './paths/messages.yaml'
+  /info:
+    $ref: './paths/info.yaml'

@@ -1,0 +1,9 @@
+output: ../../../../pkg/api/inbound-connector/v1/inbound_connector.gen.go
+package: inbound_connector_v1
+generate:
+  models: true
+  chi-server: true
+  strict-server: true # Генерирует строго типизированный интерфейс (Request/Response)
+  embedded-spec: true # Вшивает swagger-спецификацию прямо в Go код!
+output-options:
+  skip-prune: true

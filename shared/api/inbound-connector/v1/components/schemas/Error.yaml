@@ -1,0 +1,18 @@
+type: object
+required:
+  - code
+  - message
+properties:
+  code:
+    type: integer
+    format: int32
+    description: Внутренний код ошибки
+    example: 4001
+  message:
+    type: string
+    description: Человекочитаемое описание ошибки
+    example: "Неверный формат payload"
+  details:
+    type: object
+    additionalProperties: true
+    description: Дополнительная информация об ошибке (опционально)

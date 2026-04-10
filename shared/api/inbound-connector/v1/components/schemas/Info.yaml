@@ -1,0 +1,18 @@
+type: object
+required:
+  - name
+  - version
+  - status
+properties:
+  name:
+    type: string
+    description: Имя микросервиса
+    example: "inbound-connector"
+  version:
+    type: string
+    description: Версия сборки
+    example: "1.0.0"
+  status:
+    type: string
+    description: Текущий статус (health)
+    example: "ok"

@@ -14,6 +14,8 @@ type config struct {
 	App          AppConfig
 	Otel         OtelConfig
 	MetricConfig MetricServerConfig
+	Rest         RestConfig
+	Kafka        KafkaConfig
 }
 
 func Load(path ...string) error {
@@ -43,11 +45,23 @@ func Load(path ...string) error {
 		return err
 	}
 
+	restCfg, err := env.NewRestConfig()
+	if err != nil {
+		return err
+	}
+
+	kafkaCfg, err := env.NewKafkaConfig()
+	if err != nil {
+		return err
+	}
+
 	commonAppConfig = &config{
 		Logger:       loggerCfg,
 		App:          appCfg,
 		Otel:         otelCfg,
 		MetricConfig: metricCfg,
+		Rest:         restCfg,
+		Kafka:        kafkaCfg,
 	}
 
 	return nil

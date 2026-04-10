@@ -19,11 +19,17 @@ Enterprise Service Bus platform for distributed systems integration based on Eve
 | Kafka (KRaft) | 9092 | Event streaming broker |
 | Kafka UI | 8080 | Web UI for Kafka cluster management |
 | Elasticsearch | 9200 | Log storage and full-text search |
-| Kibana | — | Log visualization (Elasticsearch UI) |
+| Kibana | 5601 | Log visualization (Elasticsearch UI) |
 | Jaeger | 16686 | Distributed tracing UI and OTLP endpoint |
 | Prometheus | 9090 | Metrics collection and storage |
 | Grafana | 3000 | Dashboards and visualization |
-| OpenTelemetry Collector | — | OTLP receiver, telemetry pipeline |
+| OpenTelemetry Collector | 4317 / 4318 | OTLP receiver (gRPC / HTTP), telemetry pipeline |
+
+#### Services (local access)
+
+| Service | Port | Swagger UI |
+|---------|------|------------|
+| inbound-connector | 8081 | http://localhost:8081/docs |
 
 Observability stack: OpenTelemetry SDK → OTLP Collector → Jaeger (traces), Elasticsearch (logs), Prometheus (metrics).
 
@@ -48,7 +54,16 @@ Service configuration via `.env` files in `deployment/<service>/`. Global enviro
 ### Commands
 
 ```bash
-task infra:up        # Start all infrastructure containers
-task infra:down      # Stop and remove containers
-task run SERVICE=<name>  # Run a service locally with env from deployment/<service>/.env
+task infra:up              # Start all infrastructure containers
+task infra:down            # Stop and remove containers
+task run SERVICE=<name>    # Run a service locally with env from deployment/<service>/.env
 ```
+
+### API Generation
+
+```bash
+task api:generate SERVICE=<name>   # Generate Go code from OpenAPI spec (reads from shared/api/<name>/v1/)
+task api:gen-inbound               # Shorthand: generate API for inbound-connector
+```
+
+Swagger UI for running services: `http://localhost:<port>/docs` (e.g. http://localhost:8081/docs for inbound-connector).

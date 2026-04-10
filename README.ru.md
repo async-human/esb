@@ -20,11 +20,17 @@
 | Kafka (KRaft) | 9092 | Брокер потоковой передачи событий |
 | Kafka UI | 8080 | Веб-интерфейс управления кластером Kafka |
 | Elasticsearch | 9200 | Хранилище логов и полнотекстовый поиск |
-| Kibana | — | Визуализация логов (UI для Elasticsearch) |
+| Kibana | 5601 | Визуализация логов (UI для Elasticsearch) |
 | Jaeger | 16686 | Распределённая трассировка (UI + OTLP) |
 | Prometheus | 9090 | Сбор и хранение метрик |
 | Grafana | 3000 | Визуализация и дашборды |
-| OpenTelemetry Collector | — | Приём OTLP, конвейер телеметрии |
+| OpenTelemetry Collector | 4317 / 4318 | Приём OTLP (gRPC / HTTP), конвейер телеметрии |
+
+#### Сервисы (локальный доступ)
+
+| Сервис | Порт | Swagger UI |
+|--------|------|------------|
+| inbound-connector | 8081 | http://localhost:8081/docs |
 
 Стек наблюдаемости: OpenTelemetry SDK → OTLP Collector → Jaeger (трейсы), Elasticsearch (логи), Prometheus (метрики).
 
@@ -53,3 +59,12 @@ task infra:up              # Запустить все контейнеры ин
 task infra:down            # Остановить и удалить контейнеры
 task run SERVICE=<имя>     # Запустить сервис локально с env из deployment/<service>/.env
 ```
+
+### Генерация API
+
+```bash
+task api:generate SERVICE=<имя>   # Сгенерировать Go-код из OpenAPI спецификации (читает из shared/api/<имя>/v1/)
+task api:gen-inbound              # Сокращённая команда: генерация API для inbound-connector
+```
+
+Swagger UI для запущенных сервисов: `http://localhost:<порт>/docs` (например, http://localhost:8081/docs для inbound-connector).

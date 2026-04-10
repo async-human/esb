@@ -22,3 +22,13 @@ type MetricServerConfig interface {
 	CollectorEndpoint() string
 	CollectorInterval() time.Duration
 }
+
+type RestConfig interface {
+	Host() string
+	Port() string
+	Address() string
+}
+
+type KafkaConfig interface {
+	Brokers() []string
+}

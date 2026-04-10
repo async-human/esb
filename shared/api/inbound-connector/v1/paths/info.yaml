@@ -1,0 +1,12 @@
+get:
+  summary: Получить информацию о сервисе
+  operationId: getInfo
+  tags:
+    - System
+  responses:
+    '200':
+      description: Информация о сервисе успешно получена
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/Info.yaml'

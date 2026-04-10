@@ -36,3 +36,29 @@ tasks:
     dir: 'services/{{.SERVICE}}'
     cmds:
       - go run ./cmd/app
+
+  api:install-tools:
+    desc: "Установить/обновить утилиты для генерации API (oapi-codegen)"
+    cmds:
+      - echo "==> Установка github.com/oapi-codegen/oapi-codegen/v2..."
+      - go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
+      - echo "==> Готово!"
+
+  api:generate:
+    desc: "Сгенерировать Go-код из OpenAPI (пример: task api:generate SERVICE=inbound-connector)"
+    summary: |
+      Генерирует серверный интерфейс, модели и клиенты на основе OpenAPI спецификации.
+      Берет конфигурацию из shared/api/{{.SERVICE}}/v1/oapi-codegen.yaml
+    dir: 'shared/api/{{.SERVICE}}/v1'
+    requires:
+      vars: [SERVICE]
+    cmds:
+      - echo "==> Генерация API для сервиса {{.SERVICE}}..."
+      - oapi-codegen -config oapi-codegen.yaml openapi.yaml
+      - echo "==> Успешно сгенерировано в pkg/api/{{.SERVICE}}/v1!"
+
+  api:gen-inbound:
+    desc: "Генерация API для inbound-connector"
+    cmds:
+      - task: api:generate
+        vars: { SERVICE: 'inbound-connector' }
