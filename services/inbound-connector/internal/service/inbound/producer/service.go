@@ -6,12 +6,10 @@ import (
 
 type service struct {
 	producer kafka.Producer
-	topic    string
 }
 
-func NewService(producer kafka.Producer, topic string) *service {
+func NewService(producer kafka.Producer) *service {
 	return &service{
 		producer: producer,
-		topic:    topic,
 	}
 }

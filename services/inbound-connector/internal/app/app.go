@@ -148,10 +148,7 @@ func (a *App) initHttpServer(ctx context.Context) error {
 	swaggerUI := v5emb.New("Inbound Connector API", "/swagger.json", "/docs")
 	r.Mount("/docs", swaggerUI)
 
-	handler, err := a.diContainer.MessageHandler(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to initialize message handler: %w", err)
-	}
+	handler := a.diContainer.MessageHandler(ctx)
 	r.Mount("/", icv1.Handler(handler))
 
 	a.httpServer = &http.Server{

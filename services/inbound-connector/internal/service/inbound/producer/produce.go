@@ -18,7 +18,6 @@ func (p *service) ProduceMessageRecorded(ctx context.Context, message model.Mess
 
 	logger.Info(ctx, "📨 Sending message to Kafka",
 		zap.String("message_id", message.Id.String()),
-		zap.String("topic", p.topic),
 	)
 
 	err = p.producer.Send(ctx, []byte(message.Id.String()), payload)

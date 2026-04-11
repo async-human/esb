@@ -11,9 +11,10 @@ import (
 	inbound "github.com/async-human/esb/inbound-connector/internal/service/inbound"
 	inboundproducer "github.com/async-human/esb/inbound-connector/internal/service/inbound/producer"
 	icv1 "github.com/async-human/esb/pkg/api/inbound-connector/v1"
+	"github.com/async-human/esb/platform/closer"
 	"github.com/async-human/esb/platform/kafka"
 	kafkaproducer "github.com/async-human/esb/platform/kafka/producer"
-	platformlogger "github.com/async-human/esb/platform/logger"
+	"github.com/async-human/esb/platform/logger"
 )
 
 type diContainer struct {
@@ -27,48 +28,41 @@ func NewDiContainer() *diContainer {
 	return &diContainer{}
 }
 
-func (d *diContainer) KafkaProducer(ctx context.Context) (kafka.Producer, error) {
+func (d *diContainer) KafkaProducer(ctx context.Context) kafka.Producer {
 	if d.kafkaProducer == nil {
 		kafkaCfg := config.CommonAppConfig().Kafka
 		syncProducer, err := sarama.NewSyncProducer(kafkaCfg.Brokers(), nil)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create kafka producer: %w", err)
+			panic(fmt.Sprintf("failed to create sync producer: %s\n", err.Error()))
 		}
-
-		d.kafkaProducer = kafkaproducer.NewProducer(syncProducer, "inbound-messages", platformlogger.Logger())
+		closer.AddNamed("Kafka sync producer", func(ctx context.Context) error {
+			return syncProducer.Close()
+		})
+		d.kafkaProducer = kafkaproducer.NewProducer(syncProducer, "esb.inbound.raw", logger.Logger())
 	}
-	return d.kafkaProducer, nil
+	return d.kafkaProducer
 }
 
-func (d *diContainer) MessageProducerService(ctx context.Context) (servicedDef.MessageProducerService, error) {
+func (d *diContainer) MessageProducerService(ctx context.Context) servicedDef.MessageProducerService {
 	if d.messageProducerService == nil {
-		kafkaProducer, err := d.KafkaProducer(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to initialize kafka producer: %w", err)
-		}
-		d.messageProducerService = inboundproducer.NewService(kafkaProducer, "inbound-messages")
+		kafkaProducer := d.KafkaProducer(ctx)
+		d.messageProducerService = inboundproducer.NewService(kafkaProducer)
 	}
-	return d.messageProducerService, nil
+	return d.messageProducerService
 }
 
-func (d *diContainer) MessageService(ctx context.Context) (servicedDef.MessageService, error) {
+func (d *diContainer) MessageService(ctx context.Context) servicedDef.MessageService {
 	if d.messageService == nil {
-		producerService, err := d.MessageProducerService(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to initialize message producer service: %w", err)
-		}
+		producerService := d.MessageProducerService(ctx)
 		d.messageService = inbound.NewService(producerService)
 	}
-	return d.messageService, nil
+	return d.messageService
 }
 
-func (d *diContainer) MessageHandler(ctx context.Context) (icv1.ServerInterface, error) {
+func (d *diContainer) MessageHandler(ctx context.Context) icv1.ServerInterface {
 	if d.messageHandler == nil {
-		messageService, err := d.MessageService(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to initialize message service: %w", err)
-		}
+		messageService := d.MessageService(ctx)
 		d.messageHandler = icv1.NewStrictHandler(api.New(messageService), nil)
 	}
-	return d.messageHandler, nil
+	return d.messageHandler
 }

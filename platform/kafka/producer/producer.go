@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/IBM/sarama"
+	"github.com/async-human/esb/platform/logger"
 	"go.uber.org/zap"
 )
 
@@ -33,7 +34,7 @@ func (p *producer) Send(ctx context.Context, key, value []byte) error {
 		Value: sarama.ByteEncoder(value),
 	})
 	if err != nil {
-		p.logger.Error(ctx, "Failed to send message", zap.Error(err))
+		logger.Error(ctx, "Failed to send message", zap.Error(err))
 		return err
 	}
 
