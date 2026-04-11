@@ -10,10 +10,13 @@ import (
 var commonAppConfig *config
 
 type config struct {
-	Logger       LoggerConfig
-	App          AppConfig
-	Otel         OtelConfig
-	MetricConfig MetricServerConfig
+	Logger                 LoggerConfig
+	App                    AppConfig
+	Otel                   OtelConfig
+	MetricConfig           MetricServerConfig
+	KafkaConfig            KafkaConfig
+	InboundConsumerConfig  InboundConsumerConfig
+	OutboundProducerConfig OutboundProducerConfig
 }
 
 func Load(path ...string) error {
@@ -43,11 +46,29 @@ func Load(path ...string) error {
 		return err
 	}
 
+	kafkaCfg, err := env.NewKafkaConfig()
+	if err != nil {
+		return err
+	}
+
+	inboundConsumerCfg, err := env.NewInboundConsumerConfig()
+	if err != nil {
+		return err
+	}
+
+	outboundProducerCfg, err := env.NewOutboundProducerConfig()
+	if err != nil {
+		return err
+	}
+
 	commonAppConfig = &config{
-		Logger: loggerCfg,
-		App:    appCfg,
-		Otel:   otelCfg,
+		Logger:       loggerCfg,
+		App:          appCfg,
+		Otel:         otelCfg,
 		MetricConfig: metricCfg,
+		KafkaConfig:  kafkaCfg,
+		InboundConsumerConfig:  inboundConsumerCfg,
+		OutboundProducerConfig: outboundProducerCfg,
 	}
 
 	return nil

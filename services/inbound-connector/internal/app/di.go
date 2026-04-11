@@ -18,7 +18,7 @@ import (
 )
 
 type diContainer struct {
-	messageProducerService servicedDef.MessageProducerService
+	messageProducerService servicedDef.ProducerService
 	messageHandler         icv1.ServerInterface
 	messageService         servicedDef.MessageService
 	kafkaProducer          kafka.Producer
@@ -31,19 +31,24 @@ func NewDiContainer() *diContainer {
 func (d *diContainer) KafkaProducer(ctx context.Context) kafka.Producer {
 	if d.kafkaProducer == nil {
 		kafkaCfg := config.CommonAppConfig().Kafka
-		syncProducer, err := sarama.NewSyncProducer(kafkaCfg.Brokers(), nil)
+		syncProducer, err := sarama.NewSyncProducer(kafkaCfg.Brokers(), config.CommonAppConfig().Inbound.Config())
 		if err != nil {
 			panic(fmt.Sprintf("failed to create sync producer: %s\n", err.Error()))
 		}
 		closer.AddNamed("Kafka sync producer", func(ctx context.Context) error {
 			return syncProducer.Close()
 		})
-		d.kafkaProducer = kafkaproducer.NewProducer(syncProducer, "esb.inbound.raw", logger.Logger())
+
+		topics := []string{
+			config.CommonAppConfig().Inbound.Topic(),
+		}
+
+		d.kafkaProducer = kafkaproducer.NewProducer(syncProducer, topics, logger.Logger())
 	}
 	return d.kafkaProducer
 }
 
-func (d *diContainer) MessageProducerService(ctx context.Context) servicedDef.MessageProducerService {
+func (d *diContainer) MessageProducerService(ctx context.Context) servicedDef.ProducerService {
 	if d.messageProducerService == nil {
 		kafkaProducer := d.KafkaProducer(ctx)
 		d.messageProducerService = inboundproducer.NewService(kafkaProducer)

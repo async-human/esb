@@ -9,7 +9,7 @@ import (
 	metricsPlatform "github.com/async-human/esb/platform/metrics"
 	"github.com/async-human/esb/platform/tracing"
 	"github.com/async-human/esb/router-worker/internal/config"
-	"github.com/async-human/esb/router-worker/internal/metrics"
+	"go.uber.org/zap"
 )
 
 type App struct {
@@ -28,21 +28,10 @@ func New(ctx context.Context) (*App, error) {
 
 func (a *App) Run(ctx context.Context) error {
 
-	logger.Info(ctx, "📊 Текущий уровень логирования: "+logger.GetLevel().String())
-	logger.Debug(ctx, "🔍 [DEBUG] Router Worker: проверка уровня логирования DEBUG")
-	logger.Info(ctx, "🚀 Router-worker запущен и готов к обработке сообщений")
-	logger.Warn(ctx, "⚠️ [WARN] Router Worker: проверка уровня логирования WARN")
-	logger.Error(ctx, "❌ [ERROR] Router Worker: проверка уровня логирования ERROR")
-
-	metrics.AppStartsTotal.Add(ctx, 1)
-	_, span := tracing.StartSpan(ctx, "start.router-worker")
-
-	<-ctx.Done()
-
-	span.End()
-	metrics.AppEndTotal.Add(ctx, 1)
-
-	logger.Info(ctx, "Shutdown signal received")
+	if err := a.runConsumer(ctx); err != nil {
+		logger.Error(ctx, "Consumer crashed", zap.Error(err))
+		return err
+	}
 
 	return nil
 
@@ -121,6 +110,19 @@ func (a *App) initTracing(ctx context.Context) error {
 	}
 
 	closer.AddNamed("tracing", tracing.ShutdownTracer)
+
+	return nil
+}
+
+func (a *App) runConsumer(ctx context.Context) error {
+
+	logger.Info(ctx, "🚀 Router Worker Kafka consumer running")
+
+	err := a.diContainer.ConsumerService().RunConsumer(ctx)
+	if err != nil {
+		logger.Error(ctx, "RunConsumer failed", zap.Error(err))
+		return err
+	}
 
 	return nil
 }

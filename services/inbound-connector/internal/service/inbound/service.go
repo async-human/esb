@@ -8,10 +8,10 @@ import (
 )
 
 type service struct {
-	messageProducerService servicedDef.MessageProducerService
+	messageProducerService servicedDef.ProducerService
 }
 
-func NewService(messageProducerService servicedDef.MessageProducerService) *service {
+func NewService(messageProducerService servicedDef.ProducerService) *service {
 	return &service{
 		messageProducerService: messageProducerService,
 	}
@@ -26,7 +26,7 @@ func (s *service) GetInfo(ctx context.Context) (model.Info, error) {
 }
 
 func (s *service) PostMessage(ctx context.Context, request model.Message) (bool, error) {
-	err := s.messageProducerService.ProduceMessageRecorded(ctx, request)
+	err := s.messageProducerService.ProduceMessage(ctx, request)
 	if err != nil {
 		return false, err
 	}

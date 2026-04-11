@@ -16,6 +16,7 @@ type config struct {
 	MetricConfig MetricServerConfig
 	Rest         RestConfig
 	Kafka        KafkaConfig
+	Inbound      InboundProducerConfig
 }
 
 func Load(path ...string) error {
@@ -55,6 +56,11 @@ func Load(path ...string) error {
 		return err
 	}
 
+	inboundCfg, err := env.NewInboundProducerConfig()
+	if err != nil {
+		return err
+	}
+
 	commonAppConfig = &config{
 		Logger:       loggerCfg,
 		App:          appCfg,
@@ -62,6 +68,7 @@ func Load(path ...string) error {
 		MetricConfig: metricCfg,
 		Rest:         restCfg,
 		Kafka:        kafkaCfg,
+		Inbound:      inboundCfg,
 	}
 
 	return nil

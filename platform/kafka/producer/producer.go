@@ -15,36 +15,38 @@ type Logger interface {
 
 type producer struct {
 	syncProducer sarama.SyncProducer
-	topic        string
+	topics       []string
 	logger       Logger
 }
 
-func NewProducer(syncProducer sarama.SyncProducer, topic string, logger Logger) *producer {
+func NewProducer(syncProducer sarama.SyncProducer, topics []string, logger Logger) *producer {
 	return &producer{
 		syncProducer: syncProducer,
-		topic:        topic,
+		topics:       topics,
 		logger:       logger,
 	}
 }
 
 func (p *producer) Send(ctx context.Context, key, value []byte) error {
-	partition, offset, err := p.syncProducer.SendMessage(&sarama.ProducerMessage{
-		Topic: p.topic,
-		Key:   sarama.ByteEncoder(key),
-		Value: sarama.ByteEncoder(value),
-	})
-	if err != nil {
-		logger.Error(ctx, "Failed to send message", zap.Error(err))
-		return err
+	
+	for _, topic := range p.topics {
+		partition, offset, err := p.syncProducer.SendMessage(&sarama.ProducerMessage{
+			Topic: topic,
+			Key:   sarama.ByteEncoder(key),
+			Value: sarama.ByteEncoder(value),
+		})
+		if err != nil {
+			logger.Error(ctx, "Failed send message to Kafka", zap.Error(err))
+			return err
+		}
+		p.logger.Info(ctx, "Message sent to Kafka",
+			zap.String("topic", topic),
+			zap.Int32("partition", partition),
+			zap.Int64("offset", offset),
+			zap.String("key", string(key)),
+			zap.String("value", string(value)),
+		)
 	}
-
-	p.logger.Info(ctx, "Message sent",
-		zap.String("topic", p.topic),
-		zap.Int32("partition", partition),
-		zap.Int64("offset", offset),
-		zap.String("key", string(key)),
-		zap.String("value", string(value)),
-	)
 
 	return nil
 }

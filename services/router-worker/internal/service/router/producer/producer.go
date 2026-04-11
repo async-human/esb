@@ -5,12 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/async-human/esb/inbound-connector/internal/model"
 	"github.com/async-human/esb/platform/logger"
+	"github.com/async-human/esb/router-worker/internal/model"
 	"go.uber.org/zap"
 )
 
 func (p *service) ProduceMessage(ctx context.Context, message model.Message) error {
+
+	message.Payload["test"] = "Hello from Router Worker!"
 
 	payload, err := json.Marshal(message)
 	if err != nil {

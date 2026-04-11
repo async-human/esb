@@ -15,6 +15,6 @@ type ConsumerService interface {
 	RunConsumer(ctx context.Context) error
 }
 
-type MessageProducerService interface {
-	ProduceMessageRecorded(ctx context.Context, message model.Message) error
+type ProducerService interface {
+	ProduceMessage(ctx context.Context, message model.Message) error
 }
