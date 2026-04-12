@@ -1,0 +1,18 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/api/messages",
+    "headers": {
+      "Content-Type": {
+        "equalTo": "application/json"
+      }
+    }
+  },
+  "response": {
+    "status": 201,
+    "body": "{\"status\":\"ok\",\"timestamp\":\"{{now}}\"}",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

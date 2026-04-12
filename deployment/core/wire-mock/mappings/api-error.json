@@ -1,0 +1,14 @@
+{
+  "priority": 10,
+  "request": {
+    "method": "POST",
+    "url": "/api/error-test"
+  },
+  "response": {
+    "status": 500,
+    "body": "{\"error\":\"Internal Server Error\",\"message\":\"Simulated error for testing\"}",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

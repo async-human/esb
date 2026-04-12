@@ -1,6 +1,10 @@
 package config
 
-import "time"
+import (
+	"time"
+
+	"github.com/IBM/sarama"
+)
 
 type LoggerConfig interface {
 	Level() string
@@ -21,4 +25,15 @@ type AppConfig interface {
 type MetricServerConfig interface {
 	CollectorEndpoint() string
 	CollectorInterval() time.Duration
+}
+
+type KafkaConfig interface {
+	Brokers() []string
+}
+
+type InboundConsumerConfig interface {
+	Topic() string
+	GroupID() string
+	Config() *sarama.Config
+	Endpoints() []string
 }

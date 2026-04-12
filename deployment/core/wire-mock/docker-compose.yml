@@ -1,0 +1,25 @@
+services:
+  wiremock:
+    image: holomekc/wiremock-gui:3.13.142
+    container_name: ${COMPOSE_PROJECT_NAME:-esb}-wiremock
+    env_file:
+      - .env
+    ports:
+      - "${WIREMOCK_UI_PORT:-8088}:8080"
+    volumes:
+      - ./mappings:/home/wiremock/mappings:ro
+    command:
+      - --global-response-templating
+    networks:
+      - esb_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/__admin"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"

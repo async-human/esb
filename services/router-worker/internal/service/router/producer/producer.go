@@ -12,6 +12,9 @@ import (
 
 func (p *service) ProduceMessage(ctx context.Context, message model.Message) error {
 
+	if message.Payload == nil {
+		message.Payload = make(map[string]any)
+	}
 	message.Payload["test"] = "Hello from Router Worker!"
 
 	payload, err := json.Marshal(message)

@@ -67,3 +67,10 @@ task api:gen-inbound               # Shorthand: generate API for inbound-connect
 ```
 
 Swagger UI for running services: `http://localhost:<port>/docs` (e.g. http://localhost:8081/docs for inbound-connector).
+
+### Load Testing
+
+```bash
+task test:load                     # Run load testing with k6 (default: scripts/load-test.js)
+task test:load SCRIPT=<path>       # Run a custom k6 script (e.g., SCRIPT=scripts/stress-test.js)
+```

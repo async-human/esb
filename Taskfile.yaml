@@ -62,3 +62,20 @@ tasks:
     cmds:
       - task: api:generate
         vars: { SERVICE: 'inbound-connector' }
+
+  test:load:
+    desc: "Запустить нагрузочное тестирование через k6"
+    summary: |
+      Запускает k6 в Docker-контейнере и выполняет JS-скрипт.
+      По умолчанию запускает scripts/load-test.js.
+      
+      Пример использования по умолчанию:
+        task test:load
+        
+      Пример запуска другого скрипта:
+        task test:load SCRIPT=scripts/stress-test.js
+    vars:
+      SCRIPT: '{{default "scripts/load-test.js" .SCRIPT}}'
+    cmds:
+      - echo "==> Запуск k6 со скриптом {{.SCRIPT}}..."
+      - docker run --rm -i --network esb_network grafana/k6 run - < {{.SCRIPT}}

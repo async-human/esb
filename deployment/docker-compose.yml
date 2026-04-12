@@ -9,6 +9,7 @@ include:
   - core/postgres/docker-compose.yml
   - core/prometheus/docker-compose.yml
   - core/otel/docker-compose.yml
+  - core/wire-mock/docker-compose.yml
   - router-worker/docker-compose.yml
   - outbound-connector/docker-compose.yml
   - management-api/docker-compose.yml
