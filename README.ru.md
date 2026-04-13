@@ -31,6 +31,9 @@
 | Сервис | Порт | Swagger UI |
 |--------|------|------------|
 | inbound-connector | 8081 | http://localhost:8081/docs |
+| management-api | 8082 | http://localhost:8082/docs |
+| outbound-connector | 8083 | http://localhost:8083/docs |
+| router-worker | 8084 | http://localhost:8084/docs |
 
 Стек наблюдаемости: OpenTelemetry SDK → OTLP Collector → Jaeger (трейсы), Elasticsearch (логи), Prometheus (метрики).
 

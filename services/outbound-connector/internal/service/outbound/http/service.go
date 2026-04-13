@@ -3,6 +3,8 @@ package http
 import (
 	"net/http"
 	"time"
+
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 const(
@@ -14,9 +16,10 @@ type service struct {
 }
 
 func NewService() *service {
-	return &service{
-		client: &http.Client{
-			Timeout: timeout,
-		},
-	}
+    return &service{
+        client: &http.Client{
+            Timeout: timeout,
+            Transport: otelhttp.NewTransport(http.DefaultTransport),
+        },
+    }
 }

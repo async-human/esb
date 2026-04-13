@@ -9,6 +9,7 @@ import (
 	platformKafka "github.com/async-human/esb/platform/kafka"
 	platformKafkaConsumer "github.com/async-human/esb/platform/kafka/consumer"
 	platformKafkaProducer "github.com/async-human/esb/platform/kafka/producer"
+	platformKafkaMiddleware "github.com/async-human/esb/platform/middleware/kafka"
 	"github.com/async-human/esb/platform/logger"
 	"github.com/async-human/esb/router-worker/internal/config"
 	kafkaConverter "github.com/async-human/esb/router-worker/internal/converter/kafka"
@@ -63,6 +64,8 @@ func (d *diContainer) Consumer() platformKafka.Consumer {
 			d.ConsumerGroup(),
 			topics,
 			logger.Logger(),
+			platformKafkaMiddleware.TracingConsumer(), // ← сначала tracing
+			platformKafkaMiddleware.LoggingConsumer(logger.Logger()),
 		)
 	}
 	return d.consumer
@@ -116,6 +119,8 @@ func (d *diContainer) PlatformProducer() platformKafka.Producer {
 			d.SyncProducer(),
 			config.CommonAppConfig().OutboundProducerConfig.Topics(),
 			logger.Logger(),
+			platformKafkaMiddleware.TracingProducer(), // ← inject в headers
+			platformKafkaMiddleware.LoggingProducer(logger.Logger()),
 		)
 	}
 	return d.platformProducer

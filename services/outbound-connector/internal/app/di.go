@@ -7,6 +7,7 @@ import (
 	"github.com/IBM/sarama"
 	"github.com/async-human/esb/outbound-connector/internal/config"
 	kafkaConverter "github.com/async-human/esb/outbound-connector/internal/converter/kafka"
+	platformKafkaMiddleware "github.com/async-human/esb/platform/middleware/kafka"
 	"github.com/async-human/esb/outbound-connector/internal/converter/kafka/decode"
 	"github.com/async-human/esb/outbound-connector/internal/service"
 	"github.com/async-human/esb/outbound-connector/internal/service/outbound/consumer"
@@ -51,6 +52,8 @@ func (d *diContainer) Consumer() platformKafka.Consumer {
 			d.ConsumerGroup(),
 			topics,
 			logger.Logger(),
+			platformKafkaMiddleware.TracingConsumer(), // ← сначала tracing
+			platformKafkaMiddleware.LoggingConsumer(logger.Logger()),
 		)
 	}
 	return d.consumer

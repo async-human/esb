@@ -30,6 +30,9 @@ Enterprise Service Bus platform for distributed systems integration based on Eve
 | Service | Port | Swagger UI |
 |---------|------|------------|
 | inbound-connector | 8081 | http://localhost:8081/docs |
+| management-api | 8082 | http://localhost:8082/docs |
+| outbound-connector | 8083 | http://localhost:8083/docs |
+| router-worker | 8084 | http://localhost:8084/docs |
 
 Observability stack: OpenTelemetry SDK → OTLP Collector → Jaeger (traces), Elasticsearch (logs), Prometheus (metrics).
 

@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/async-human/esb/inbound-connector/internal/model"
+	"github.com/async-human/esb/platform/kafka"
 	"github.com/async-human/esb/platform/logger"
 	"go.uber.org/zap"
 )
@@ -17,7 +18,11 @@ func (p *service) ProduceMessage(ctx context.Context, message model.Message) err
 		return fmt.Errorf("failed to marshal message: %w", err)
 	}
 
-	err = p.producer.Send(ctx, []byte(message.Id.String()), payload)
+	err = p.producer.Send(ctx, kafka.Message{
+		Key:   []byte(message.Id.String()),
+		Value: payload,
+	})
+	
 	if err != nil {
 		logger.Error(ctx, "❌ Failed to send message to Kafka",
 			zap.String("message_id", message.Id.String()),

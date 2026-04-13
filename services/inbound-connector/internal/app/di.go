@@ -14,6 +14,7 @@ import (
 	"github.com/async-human/esb/platform/closer"
 	"github.com/async-human/esb/platform/kafka"
 	kafkaproducer "github.com/async-human/esb/platform/kafka/producer"
+	platformKafkaMiddleware "github.com/async-human/esb/platform/middleware/kafka"
 	"github.com/async-human/esb/platform/logger"
 )
 
@@ -43,7 +44,13 @@ func (d *diContainer) KafkaProducer(ctx context.Context) kafka.Producer {
 			config.CommonAppConfig().Inbound.Topic(),
 		}
 
-		d.kafkaProducer = kafkaproducer.NewProducer(syncProducer, topics, logger.Logger())
+		d.kafkaProducer = kafkaproducer.NewProducer(
+			syncProducer, 
+			topics, 
+			logger.Logger(),
+			platformKafkaMiddleware.TracingProducer(), // ← inject в headers
+			platformKafkaMiddleware.LoggingProducer(logger.Logger()),
+		)
 	}
 	return d.kafkaProducer
 }

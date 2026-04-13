@@ -26,7 +26,9 @@ tasks:
   run:
     desc: Run a service
     summary: |
-      Запускает указанный сервис с пробросом переменных из /deployment/{{.SERVICE}}/.env
+      Запускает указанный сервис с переменными из deployment/{{.SERVICE}}/.env
+    requires:
+      vars: [SERVICE]
     cmds:
       - task: service:run
         vars: { SERVICE: '{{.SERVICE}}' }
@@ -34,6 +36,8 @@ tasks:
   service:run:
     internal: true
     dir: 'services/{{.SERVICE}}'
+    dotenv:
+      - '{{.ROOT_DIR}}/deployment/{{.SERVICE}}/.env'
     cmds:
       - go run ./cmd/app
 

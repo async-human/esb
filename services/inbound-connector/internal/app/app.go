@@ -15,6 +15,7 @@ import (
 	"github.com/async-human/esb/platform/tracing"
 	"github.com/go-chi/chi/v5"
 	"github.com/swaggest/swgui/v5emb"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.uber.org/zap"
 )
 
@@ -148,8 +149,11 @@ func (a *App) initHttpServer(ctx context.Context) error {
 	swaggerUI := v5emb.New("Inbound Connector API", "/swagger.json", "/docs")
 	r.Mount("/docs", swaggerUI)
 
-	handler := a.diContainer.MessageHandler(ctx)
-	r.Mount("/", icv1.Handler(handler))
+	handler := icv1.Handler(a.diContainer.MessageHandler(ctx))
+	
+	otelHandler := otelhttp.NewHandler(handler, config.CommonAppConfig().App.ServiceName())
+
+	r.Mount("/", otelHandler)
 
 	a.httpServer = &http.Server{
 		Addr:              config.CommonAppConfig().Rest.Address(),
