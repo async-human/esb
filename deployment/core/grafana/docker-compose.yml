@@ -13,6 +13,7 @@ services:
       - esb_network
     volumes:
       - grafana_data:/var/lib/grafana
+      - ./provisioning:/etc/grafana/provisioning
 
 volumes:
   grafana_data:

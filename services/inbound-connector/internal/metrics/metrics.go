@@ -1,24 +1,33 @@
 package metrics
 
 import (
+	"errors"
+	"fmt"
+
+	"github.com/async-human/esb/inbound-connector/internal/config"
+	shared "github.com/async-human/esb/platform/metrics"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/metric"
 )
 
-var(
-	// Регистрация метра
-	meter = otel.Meter("inbound-connector")
+type Metrics struct {
+	App      shared.App
+	HTTP     shared.HTTP
+	Producer shared.KafkaProducer
+}
 
-	// Starting app считает общее количество запусков
-	AppStartsTotal, _ = meter.Int64Counter(
-		"inbound_connector_starts_total",
-		metric.WithDescription("Total number of starts Inbound Connector"),
-	)
+var ServiceMetrics Metrics
 
-	// Starting app считает общее количество запусков
-	AppEndTotal, _ = meter.Int64Counter(
-		"inbound_connector_end_total",
-		metric.WithDescription("Total number of end Inbound Connector"),
-	)
+func Init() error {
+	meter := otel.Meter(config.CommonAppConfig().App.ServiceName())
 
-)
+	app, e1 := shared.NewApp(meter)
+	http, e2 := shared.NewHTTP(meter)
+	producer, e3 := shared.NewKafkaProducer(meter)
+
+	if err := errors.Join(e1, e2, e3); err != nil {
+		return fmt.Errorf("inbound metrics: %w", err)
+	}
+
+	ServiceMetrics = Metrics{app, http, producer}
+	return nil
+}

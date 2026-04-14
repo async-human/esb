@@ -9,6 +9,7 @@ import (
 	metricsPlatform "github.com/async-human/esb/platform/metrics"
 	"github.com/async-human/esb/platform/tracing"
 	"github.com/async-human/esb/router-worker/internal/config"
+	"github.com/async-human/esb/router-worker/internal/metrics"
 	"go.uber.org/zap"
 )
 
@@ -90,6 +91,10 @@ func (a *App) initMetrics(ctx context.Context) error {
 	}
 
 	closer.AddNamed("metrics", metricsPlatform.Shutdown)
+
+	if err := metrics.Init(); err != nil {
+		return err
+	}
 
 	return nil
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/async-human/esb/outbound-connector/internal/config"
+	"github.com/async-human/esb/outbound-connector/internal/metrics"
 	"github.com/async-human/esb/platform/closer"
 	"github.com/async-human/esb/platform/logger"
 	metricsPlatform "github.com/async-human/esb/platform/metrics"
@@ -90,6 +91,10 @@ func (a *App) initMetrics(ctx context.Context) error {
 	}
 
 	closer.AddNamed("metrics", metricsPlatform.Shutdown)
+
+	if err := metrics.Init(); err != nil {
+		return err
+	}
 
 	return nil
 }

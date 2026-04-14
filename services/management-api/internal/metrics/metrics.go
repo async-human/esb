@@ -1,24 +1,33 @@
 package metrics
 
 import (
+	"errors"
+	"fmt"
+
+	"github.com/async-human/esb/management-api/internal/config"
+	shared "github.com/async-human/esb/platform/metrics"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/metric"
 )
 
-var(
-	// Регистрация метра
-	meter = otel.Meter("management-api")
+type Metrics struct {
+	App      shared.App
+	HTTP     shared.HTTP
+	Producer shared.KafkaProducer
+}
 
-	// Starting app считает общее количество запусков
-	AppStartsTotal, _ = meter.Int64Counter(
-		"management_api_starts_total",
-		metric.WithDescription("Total number of starts Management API"),
-	)
+var ServiceMetrics Metrics
 
-	// Starting app считает общее количество запусков
-	AppEndTotal, _ = meter.Int64Counter(
-		"management_api_end_total",
-		metric.WithDescription("Total number of end Management API"),
-	)
+func Init() error {
+	meter := otel.Meter(config.CommonAppConfig().App.ServiceName())
 
-)
+	app, e1 := shared.NewApp(meter)
+	http, e2 := shared.NewHTTP(meter)
+	producer, e3 := shared.NewKafkaProducer(meter)
+
+	if err := errors.Join(e1, e2, e3); err != nil {
+		return fmt.Errorf("management api metrics: %w", err)
+	}
+
+	ServiceMetrics = Metrics{app, http, producer}
+	return nil
+}

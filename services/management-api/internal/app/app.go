@@ -28,21 +28,7 @@ func New(ctx context.Context) (*App, error) {
 
 func (a *App) Run(ctx context.Context) error {
 
-	logger.Info(ctx, "📊 Текущий уровень логирования: "+logger.GetLevel().String())
-	logger.Debug(ctx, "🔍 [DEBUG] Management API: проверка уровня логирования DEBUG")
-	logger.Info(ctx, "🚀 Management API запущен и готов к работе")
-	logger.Warn(ctx, "⚠️ [WARN] Management API: проверка уровня логирования WARN")
-	logger.Error(ctx, "❌ [ERROR] Management API: проверка уровня логирования ERROR")
-
-	metrics.AppStartsTotal.Add(ctx, 1)
-	_, span := tracing.StartSpan(ctx, "start.management-api")
-
 	<-ctx.Done()
-
-	span.End()
-	metrics.AppEndTotal.Add(ctx, 1)
-
-	logger.Info(ctx, "Shutdown signal received")
 
 	return nil
 
@@ -101,6 +87,10 @@ func (a *App) initMetrics(ctx context.Context) error {
 	}
 
 	closer.AddNamed("metrics", metricsPlatform.Shutdown)
+
+	if err := metrics.Init(); err != nil {
+		return err
+	}
 
 	return nil
 }

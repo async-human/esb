@@ -1,0 +1,152 @@
+{
+  "uid": "esb-outbound-connector",
+  "title": "ESB — Outbound Connector",
+  "tags": ["esb", "outbound-connector"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 2,
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "endpoint",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
+        "query": "label_values(delivery_attempts_total{exported_job=~\".*outbound.connector.*\"}, server_address)",
+        "label": "Endpoint",
+        "hide": 0,
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": false,
+        "refresh": 2
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1, "title": "Kafka Consumer", "type": "row",
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 1 }, "collapsed": false
+    },
+    {
+      "id": 2, "title": "Consumer Lag", "type": "stat",
+      "gridPos": { "x": 0, "y": 1, "w": 6, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
+      "targets": [{ "expr": "sum(kafka_consumer_lag{exported_job=~\".*outbound.connector.*\"})", "legendFormat": "Lag", "refId": "A" }],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
+      "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 1000 }, { "color": "red", "value": 10000 }] } } }
+    },
+    {
+      "id": 3, "title": "Consume Rate", "type": "stat",
+      "gridPos": { "x": 6, "y": 1, "w": 6, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
+      "targets": [{ "expr": "sum(rate(kafka_consumer_messages_total{exported_job=~\".*outbound.connector.*\"}[$__rate_interval]))", "legendFormat": "msg/s", "refId": "A" }],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
+      "fieldConfig": { "defaults": { "unit": "mps", "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] } } }
+    },
+    {
+      "id": 4, "title": "In-Flight", "type": "stat",
+      "gridPos": { "x": 12, "y": 1, "w": 6, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
+      "targets": [{ "expr": "app_messages_in_flight{exported_job=~\".*outbound.connector.*\"}", "legendFormat": "In-Flight", "refId": "A" }],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
+      "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 100 }, { "color": "red", "value": 500 }] } } }
+    },
+    {
+      "id": 5, "title": "Delivery Success Rate", "type": "stat",
+      "gridPos": { "x": 18, "y": 1, "w": 6, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
+      "targets": [{ "expr": "sum(rate(delivery_attempts_total{exported_job=~\".*outbound.connector.*\",delivery_result=\"success\",server_address=~\"${endpoint}\"}[$__rate_interval])) / sum(rate(delivery_attempts_total{exported_job=~\".*outbound.connector.*\",server_address=~\"${endpoint}\"}[$__rate_interval])) * 100", "legendFormat": "Success %", "refId": "A" }],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "yellow", "value": 95 }, { "color": "green", "value": 99 }] } } }
+    },
+    {
+      "id": 6, "title": "Consumer Lag по топикам", "type": "timeseries",
+      "gridPos": { "x": 0, "y": 5, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
+      "targets": [{ "expr": "sum(kafka_consumer_lag{exported_job=~\".*outbound.connector.*\"}) by (messaging_topic, messaging_partition)", "legendFormat": "{{ messaging_topic }} [p{{ messaging_partition }}]", "refId": "A" }],
+      "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "showLegend": true, "placement": "bottom", "displayMode": "table", "calcs": ["lastNotNull", "max"] } },
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2, "fillOpacity": 10 } } }
+    },
+    {
+      "id": 7, "title": "Consumer Rate", "type": "timeseries",
+      "gridPos": { "x": 12, "y": 5, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
+      "targets": [{ "expr": "sum(rate(kafka_consumer_messages_total{exported_job=~\".*outbound.connector.*\"}[$__rate_interval])) by (messaging_topic)", "legendFormat": "{{ messaging_topic }}", "refId": "A" }],
+      "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "showLegend": true, "placement": "bottom" } },
+      "fieldConfig": { "defaults": { "unit": "mps", "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2, "fillOpacity": 8 } } }
+    },
+    {
+      "id": 8, "title": "HTTP Delivery", "type": "row",
+      "gridPos": { "x": 0, "y": 13, "w": 24, "h": 1 }, "collapsed": false
+    },
+    {
+      "id": 9, "title": "Delivery P95 Latency", "type": "stat",
+      "gridPos": { "x": 0, "y": 14, "w": 6, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
+      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(delivery_duration_seconds_bucket{exported_job=~\".*outbound.connector.*\",server_address=~\"${endpoint}\"}[$__rate_interval])) by (le))", "legendFormat": "P95", "refId": "A" }],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
+      "fieldConfig": { "defaults": { "unit": "s", "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 1 }, { "color": "red", "value": 5 }] } } }
+    },
+    {
+      "id": 10, "title": "Delivery Error Rate", "type": "stat",
+      "gridPos": { "x": 6, "y": 14, "w": 6, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
+      "targets": [{ "expr": "sum(rate(delivery_errors_total{exported_job=~\".*outbound.connector.*\",server_address=~\"${endpoint}\"}[$__rate_interval])) / sum(rate(delivery_attempts_total{exported_job=~\".*outbound.connector.*\",server_address=~\"${endpoint}\"}[$__rate_interval])) * 100", "legendFormat": "Error %", "refId": "A" }],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 1 }, { "color": "red", "value": 5 }] } } }
+    },
+    {
+      "id": 11, "title": "Delivery Rate", "type": "stat",
+      "gridPos": { "x": 12, "y": 14, "w": 6, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
+      "targets": [{ "expr": "sum(rate(delivery_attempts_total{exported_job=~\".*outbound.connector.*\",delivery_result=\"success\",server_address=~\"${endpoint}\"}[$__rate_interval]))", "legendFormat": "success/s", "refId": "A" }],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
+      "fieldConfig": { "defaults": { "unit": "mps", "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] } } }
+    },
+    {
+      "id": 12, "title": "Retries", "type": "stat",
+      "gridPos": { "x": 18, "y": 14, "w": 6, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
+      "targets": [{ "expr": "sum(rate(delivery_retries_total{exported_job=~\".*outbound.connector.*\"}[$__rate_interval]))", "legendFormat": "Retries/s", "refId": "A" }],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
+      "fieldConfig": { "defaults": { "unit": "mps", "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 0.1 }, { "color": "red", "value": 1 }] } } }
+    },
+    {
+      "id": 13, "title": "Delivery Attempts by Result", "type": "timeseries",
+      "gridPos": { "x": 0, "y": 18, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
+      "targets": [{ "expr": "sum(rate(delivery_attempts_total{exported_job=~\".*outbound.connector.*\",server_address=~\"${endpoint}\"}[$__rate_interval])) by (delivery_result, server_address)", "legendFormat": "{{ delivery_result }} — {{ server_address }}", "refId": "A" }],
+      "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "showLegend": true, "placement": "bottom", "displayMode": "table", "calcs": ["lastNotNull", "mean"] } },
+      "fieldConfig": { "defaults": { "unit": "mps", "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2, "fillOpacity": 8 } } }
+    },
+    {
+      "id": 14, "title": "Delivery Duration Percentiles", "type": "timeseries",
+      "gridPos": { "x": 12, "y": 18, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
+      "targets": [
+        { "expr": "histogram_quantile(0.50, sum(rate(delivery_duration_seconds_bucket{exported_job=~\".*outbound.connector.*\",server_address=~\"${endpoint}\"}[$__rate_interval])) by (le, server_address))", "legendFormat": "P50 {{ server_address }}", "refId": "A" },
+        { "expr": "histogram_quantile(0.95, sum(rate(delivery_duration_seconds_bucket{exported_job=~\".*outbound.connector.*\",server_address=~\"${endpoint}\"}[$__rate_interval])) by (le, server_address))", "legendFormat": "P95 {{ server_address }}", "refId": "B" },
+        { "expr": "histogram_quantile(0.99, sum(rate(delivery_duration_seconds_bucket{exported_job=~\".*outbound.connector.*\",server_address=~\"${endpoint}\"}[$__rate_interval])) by (le, server_address))", "legendFormat": "P99 {{ server_address }}", "refId": "C" }
+      ],
+      "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "showLegend": true, "placement": "bottom", "displayMode": "table", "calcs": ["lastNotNull", "mean", "max"] } },
+      "fieldConfig": { "defaults": { "unit": "s", "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2, "fillOpacity": 5 } } }
+    },
+    {
+      "id": 15, "title": "Errors by Type", "type": "timeseries",
+      "gridPos": { "x": 0, "y": 26, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
+      "targets": [{ "expr": "sum(rate(delivery_errors_total{exported_job=~\".*outbound.connector.*\",server_address=~\"${endpoint}\"}[$__rate_interval])) by (delivery_error_type, server_address)", "legendFormat": "{{ delivery_error_type }} — {{ server_address }}", "refId": "A" }],
+      "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "showLegend": true, "placement": "bottom", "displayMode": "table", "calcs": ["lastNotNull", "sum"] } },
+      "fieldConfig": { "defaults": { "unit": "mps", "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2, "fillOpacity": 15 } } }
+    },
+    {
+      "id": 16, "title": "HTTP Status Codes по получателю", "type": "timeseries",
+      "gridPos": { "x": 12, "y": 26, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
+      "targets": [{ "expr": "sum(rate(delivery_attempts_total{exported_job=~\".*outbound.connector.*\",server_address=~\"${endpoint}\"}[$__rate_interval])) by (http_response_status_code, server_address)", "legendFormat": "HTTP {{ http_response_status_code }} — {{ server_address }}", "refId": "A" }],
+      "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "showLegend": true, "placement": "bottom", "displayMode": "table", "calcs": ["lastNotNull", "mean"] } },
+      "fieldConfig": { "defaults": { "unit": "mps", "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2, "fillOpacity": 8 } } }
+    }
+  ]
+}

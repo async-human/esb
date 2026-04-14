@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/async-human/esb/inbound-connector/internal/config"
+	"github.com/async-human/esb/inbound-connector/internal/metrics"
 	icv1 "github.com/async-human/esb/pkg/api/inbound-connector/v1"
 	"github.com/async-human/esb/platform/closer"
 	"github.com/async-human/esb/platform/logger"
@@ -104,6 +105,10 @@ func (a *App) initMetrics(ctx context.Context) error {
 	}
 
 	closer.AddNamed("metrics", metricsPlatform.Shutdown)
+
+	if err := metrics.Init(); err != nil {
+		return err
+	}
 
 	return nil
 }

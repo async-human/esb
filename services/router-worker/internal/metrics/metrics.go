@@ -1,24 +1,35 @@
 package metrics
 
 import (
+	"errors"
+	"fmt"
+
+	shared "github.com/async-human/esb/platform/metrics"
+	"github.com/async-human/esb/router-worker/internal/config"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/metric"
 )
 
-var(
-	// Регистрация метра
-	meter = otel.Meter("router-worker")
+type Metrics struct {
+	App      shared.App
+	Consumer shared.KafkaConsumer
+	Producer shared.KafkaProducer
+	Routing  shared.Routing
+}
 
-	// Starting app считает общее количество запусков
-	AppStartsTotal, _ = meter.Int64Counter(
-		"router_worker_starts_total",
-		metric.WithDescription("Total number of starts Router Worker"),
-	)
+var ServiceMetrics Metrics
 
-	// Starting app считает общее количество запусков
-	AppEndTotal, _ = meter.Int64Counter(
-		"router_worker_end_total",
-		metric.WithDescription("Total number of end Router Worker"),
-	)
+func Init() error {
+	meter := otel.Meter(config.CommonAppConfig().App.ServiceName())
 
-)
+	app,      e1 := shared.NewApp(meter)
+	consumer, e2 := shared.NewKafkaConsumer(meter)
+	producer, e3 := shared.NewKafkaProducer(meter)
+	routing,  e4 := shared.NewRouting(meter)
+
+	if err := errors.Join(e1, e2, e3, e4); err != nil {
+		return fmt.Errorf("router-worker metrics: %w", err)
+	}
+
+	ServiceMetrics = Metrics{app, consumer, producer, routing}
+	return nil
+}
