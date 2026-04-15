@@ -1,19 +1,31 @@
 {
   "uid": "esb-router-worker",
-  "title": "ESB — Router Worker",
+  "title": "Router Worker",
   "tags": ["esb", "router-worker"],
   "timezone": "browser",
   "schemaVersion": 38,
-  "version": 2,
+  "version": 3,
   "refresh": "30s",
   "time": { "from": "now-1h", "to": "now" },
   "templating": {
     "list": [
       {
+        "name": "service",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
+        "query": "label_values(kafka_consumer_lag, exported_job)",
+        "label": "Service",
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "refresh": 2,
+        "current": { "text": "", "value": "" }
+      },
+      {
         "name": "topic",
         "type": "query",
         "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
-        "query": "label_values(kafka_consumer_lag{exported_job=~\".*router.worker.*\"}, messaging_topic)",
+        "query": "label_values(kafka_consumer_lag{exported_job=\"$service\"}, messaging_topic)",
         "label": "Topic",
         "hide": 0,
         "includeAll": true,
@@ -32,7 +44,7 @@
       "id": 2, "title": "Consumer Lag", "type": "stat",
       "gridPos": { "x": 0, "y": 1, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
-      "targets": [{ "expr": "sum(kafka_consumer_lag{exported_job=~\".*router.worker.*\",messaging_topic=~\"${topic}\"})", "legendFormat": "Lag", "refId": "A" }],
+      "targets": [{ "expr": "sum(kafka_consumer_lag{exported_job=\"$service\",messaging_topic=~\"${topic}\"})", "legendFormat": "Lag", "refId": "A" }],
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
       "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 1000 }, { "color": "red", "value": 10000 }] } } }
     },
@@ -40,7 +52,7 @@
       "id": 3, "title": "Consume Rate", "type": "stat",
       "gridPos": { "x": 6, "y": 1, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
-      "targets": [{ "expr": "sum(rate(kafka_consumer_messages_total{exported_job=~\".*router.worker.*\"}[$__rate_interval]))", "legendFormat": "msg/s", "refId": "A" }],
+      "targets": [{ "expr": "sum(rate(kafka_consumer_messages_total{exported_job=\"$service\"}[$__rate_interval]))", "legendFormat": "msg/s", "refId": "A" }],
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
       "fieldConfig": { "defaults": { "unit": "mps", "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] } } }
     },
@@ -48,7 +60,7 @@
       "id": 4, "title": "In-Flight", "type": "stat",
       "gridPos": { "x": 12, "y": 1, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
-      "targets": [{ "expr": "app_messages_in_flight{exported_job=~\".*router.worker.*\"}", "legendFormat": "In-Flight", "refId": "A" }],
+      "targets": [{ "expr": "app_messages_in_flight{exported_job=\"$service\"}", "legendFormat": "In-Flight", "refId": "A" }],
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
       "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 100 }, { "color": "red", "value": 500 }] } } }
     },
@@ -56,7 +68,7 @@
       "id": 5, "title": "Fetch P95", "type": "stat",
       "gridPos": { "x": 18, "y": 1, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
-      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(kafka_consumer_fetch_duration_seconds_bucket{exported_job=~\".*router.worker.*\"}[$__rate_interval])) by (le))", "legendFormat": "P95", "refId": "A" }],
+      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(kafka_consumer_fetch_duration_seconds_bucket{exported_job=\"$service\"}[$__rate_interval])) by (le))", "legendFormat": "P95", "refId": "A" }],
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
       "fieldConfig": { "defaults": { "unit": "s", "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 0.1 }, { "color": "red", "value": 0.5 }] } } }
     },
@@ -64,7 +76,7 @@
       "id": 6, "title": "Consumer Lag по топикам", "type": "timeseries",
       "gridPos": { "x": 0, "y": 5, "w": 12, "h": 8 },
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
-      "targets": [{ "expr": "sum(kafka_consumer_lag{exported_job=~\".*router.worker.*\",messaging_topic=~\"${topic}\"}) by (messaging_topic, messaging_partition)", "legendFormat": "{{ messaging_topic }} [p{{ messaging_partition }}]", "refId": "A" }],
+      "targets": [{ "expr": "sum(kafka_consumer_lag{exported_job=\"$service\",messaging_topic=~\"${topic}\"}) by (messaging_topic, messaging_partition)", "legendFormat": "{{ messaging_topic }} [p{{ messaging_partition }}]", "refId": "A" }],
       "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "showLegend": true, "placement": "bottom", "displayMode": "table", "calcs": ["lastNotNull", "max"] } },
       "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2, "fillOpacity": 10 } } }
     },
@@ -72,7 +84,7 @@
       "id": 7, "title": "Consumer Rate", "type": "timeseries",
       "gridPos": { "x": 12, "y": 5, "w": 12, "h": 8 },
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
-      "targets": [{ "expr": "sum(rate(kafka_consumer_messages_total{exported_job=~\".*router.worker.*\"}[$__rate_interval])) by (messaging_topic)", "legendFormat": "{{ messaging_topic }}", "refId": "A" }],
+      "targets": [{ "expr": "sum(rate(kafka_consumer_messages_total{exported_job=\"$service\"}[$__rate_interval])) by (messaging_topic)", "legendFormat": "{{ messaging_topic }}", "refId": "A" }],
       "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "showLegend": true, "placement": "bottom" } },
       "fieldConfig": { "defaults": { "unit": "mps", "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2, "fillOpacity": 8 } } }
     },
@@ -84,7 +96,7 @@
       "id": 9, "title": "Routing Success Rate", "type": "stat",
       "gridPos": { "x": 0, "y": 14, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
-      "targets": [{ "expr": "sum(rate(routing_decisions_total{exported_job=~\".*router.worker.*\",routing_result=\"success\"}[$__rate_interval])) / sum(rate(routing_decisions_total{exported_job=~\".*router.worker.*\"}[$__rate_interval])) * 100", "legendFormat": "Success %", "refId": "A" }],
+      "targets": [{ "expr": "sum(rate(routing_decisions_total{exported_job=\"$service\",routing_result=\"success\"}[$__rate_interval])) / sum(rate(routing_decisions_total{exported_job=\"$service\"}[$__rate_interval])) * 100", "legendFormat": "Success %", "refId": "A" }],
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
       "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "yellow", "value": 95 }, { "color": "green", "value": 99 }] } } }
     },
@@ -92,7 +104,7 @@
       "id": 10, "title": "DLQ Rate", "type": "stat",
       "gridPos": { "x": 6, "y": 14, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
-      "targets": [{ "expr": "sum(rate(routing_dlq_messages_total{exported_job=~\".*router.worker.*\"}[$__rate_interval]))", "legendFormat": "DLQ/s", "refId": "A" }],
+      "targets": [{ "expr": "sum(rate(routing_dlq_messages_total{exported_job=\"$service\"}[$__rate_interval]))", "legendFormat": "DLQ/s", "refId": "A" }],
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
       "fieldConfig": { "defaults": { "unit": "mps", "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 0.001 }] } } }
     },
@@ -100,7 +112,7 @@
       "id": 11, "title": "Routing P95", "type": "stat",
       "gridPos": { "x": 12, "y": 14, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
-      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(routing_decision_duration_seconds_bucket{exported_job=~\".*router.worker.*\"}[$__rate_interval])) by (le))", "legendFormat": "P95", "refId": "A" }],
+      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(routing_decision_duration_seconds_bucket{exported_job=\"$service\"}[$__rate_interval])) by (le))", "legendFormat": "P95", "refId": "A" }],
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
       "fieldConfig": { "defaults": { "unit": "s", "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 0.025 }, { "color": "red", "value": 0.1 }] } } }
     },
@@ -108,7 +120,7 @@
       "id": 12, "title": "Retry Rate", "type": "stat",
       "gridPos": { "x": 18, "y": 14, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
-      "targets": [{ "expr": "sum(rate(routing_retries_total{exported_job=~\".*router.worker.*\"}[$__rate_interval]))", "legendFormat": "Retries/s", "refId": "A" }],
+      "targets": [{ "expr": "sum(rate(routing_retries_total{exported_job=\"$service\"}[$__rate_interval]))", "legendFormat": "Retries/s", "refId": "A" }],
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
       "fieldConfig": { "defaults": { "unit": "mps", "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 0.1 }, { "color": "red", "value": 1 }] } } }
     },
@@ -116,7 +128,7 @@
       "id": 13, "title": "Routing Decisions by Result", "type": "timeseries",
       "gridPos": { "x": 0, "y": 18, "w": 12, "h": 8 },
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
-      "targets": [{ "expr": "sum(rate(routing_decisions_total{exported_job=~\".*router.worker.*\"}[$__rate_interval])) by (routing_result, messaging_topic)", "legendFormat": "{{ routing_result }} — {{ messaging_topic }}", "refId": "A" }],
+      "targets": [{ "expr": "sum(rate(routing_decisions_total{exported_job=\"$service\"}[$__rate_interval])) by (routing_result, messaging_topic)", "legendFormat": "{{ routing_result }} — {{ messaging_topic }}", "refId": "A" }],
       "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "showLegend": true, "placement": "bottom", "displayMode": "table", "calcs": ["lastNotNull", "mean"] } },
       "fieldConfig": { "defaults": { "unit": "mps", "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2, "fillOpacity": 8 } } }
     },
@@ -125,9 +137,9 @@
       "gridPos": { "x": 12, "y": 18, "w": 12, "h": 8 },
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
       "targets": [
-        { "expr": "histogram_quantile(0.50, sum(rate(routing_decision_duration_seconds_bucket{exported_job=~\".*router.worker.*\"}[$__rate_interval])) by (le))", "legendFormat": "P50", "refId": "A" },
-        { "expr": "histogram_quantile(0.95, sum(rate(routing_decision_duration_seconds_bucket{exported_job=~\".*router.worker.*\"}[$__rate_interval])) by (le))", "legendFormat": "P95", "refId": "B" },
-        { "expr": "histogram_quantile(0.99, sum(rate(routing_decision_duration_seconds_bucket{exported_job=~\".*router.worker.*\"}[$__rate_interval])) by (le))", "legendFormat": "P99", "refId": "C" }
+        { "expr": "histogram_quantile(0.50, sum(rate(routing_decision_duration_seconds_bucket{exported_job=\"$service\"}[$__rate_interval])) by (le))", "legendFormat": "P50", "refId": "A" },
+        { "expr": "histogram_quantile(0.95, sum(rate(routing_decision_duration_seconds_bucket{exported_job=\"$service\"}[$__rate_interval])) by (le))", "legendFormat": "P95", "refId": "B" },
+        { "expr": "histogram_quantile(0.99, sum(rate(routing_decision_duration_seconds_bucket{exported_job=\"$service\"}[$__rate_interval])) by (le))", "legendFormat": "P99", "refId": "C" }
       ],
       "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "showLegend": true, "placement": "bottom", "displayMode": "table", "calcs": ["lastNotNull", "mean", "max"] } },
       "fieldConfig": { "defaults": { "unit": "s", "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2, "fillOpacity": 5 } } }
@@ -137,8 +149,8 @@
       "gridPos": { "x": 0, "y": 26, "w": 24, "h": 7 },
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
       "targets": [
-        { "expr": "sum(rate(routing_dlq_messages_total{exported_job=~\".*router.worker.*\"}[$__rate_interval])) by (routing_dlq_reason)", "legendFormat": "{{ routing_dlq_reason }}", "refId": "A" },
-        { "expr": "sum(rate(routing_retries_total{exported_job=~\".*router.worker.*\"}[$__rate_interval]))", "legendFormat": "retries", "refId": "B" }
+        { "expr": "sum(rate(routing_dlq_messages_total{exported_job=\"$service\"}[$__rate_interval])) by (routing_dlq_reason)", "legendFormat": "{{ routing_dlq_reason }}", "refId": "A" },
+        { "expr": "sum(rate(routing_retries_total{exported_job=\"$service\"}[$__rate_interval]))", "legendFormat": "retries", "refId": "B" }
       ],
       "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "showLegend": true, "placement": "right", "displayMode": "table", "calcs": ["lastNotNull", "sum"] } },
       "fieldConfig": { "defaults": { "unit": "mps", "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2, "fillOpacity": 15 } } }
@@ -152,8 +164,8 @@
       "gridPos": { "x": 0, "y": 34, "w": 12, "h": 8 },
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
       "targets": [
-        { "expr": "sum(rate(kafka_producer_messages_total{exported_job=~\".*router.worker.*\"}[$__rate_interval])) by (messaging_status)", "legendFormat": "{{ messaging_status }}", "refId": "A" },
-        { "expr": "sum(rate(kafka_producer_errors_total{exported_job=~\".*router.worker.*\"}[$__rate_interval])) by (messaging_error_type)", "legendFormat": "error: {{ messaging_error_type }}", "refId": "B" }
+        { "expr": "sum(rate(kafka_producer_messages_total{exported_job=\"$service\"}[$__rate_interval])) by (messaging_status)", "legendFormat": "{{ messaging_status }}", "refId": "A" },
+        { "expr": "sum(rate(kafka_producer_errors_total{exported_job=\"$service\"}[$__rate_interval])) by (messaging_error_type)", "legendFormat": "error: {{ messaging_error_type }}", "refId": "B" }
       ],
       "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "showLegend": true, "placement": "bottom" } },
       "fieldConfig": { "defaults": { "unit": "mps", "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2, "fillOpacity": 8 } } }
@@ -163,9 +175,9 @@
       "gridPos": { "x": 12, "y": 34, "w": 12, "h": 8 },
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
       "targets": [
-        { "expr": "histogram_quantile(0.50, sum(rate(kafka_producer_duration_seconds_bucket{exported_job=~\".*router.worker.*\"}[$__rate_interval])) by (le))", "legendFormat": "P50", "refId": "A" },
-        { "expr": "histogram_quantile(0.95, sum(rate(kafka_producer_duration_seconds_bucket{exported_job=~\".*router.worker.*\"}[$__rate_interval])) by (le))", "legendFormat": "P95", "refId": "B" },
-        { "expr": "histogram_quantile(0.99, sum(rate(kafka_producer_duration_seconds_bucket{exported_job=~\".*router.worker.*\"}[$__rate_interval])) by (le))", "legendFormat": "P99", "refId": "C" }
+        { "expr": "histogram_quantile(0.50, sum(rate(kafka_producer_duration_seconds_bucket{exported_job=\"$service\"}[$__rate_interval])) by (le))", "legendFormat": "P50", "refId": "A" },
+        { "expr": "histogram_quantile(0.95, sum(rate(kafka_producer_duration_seconds_bucket{exported_job=\"$service\"}[$__rate_interval])) by (le))", "legendFormat": "P95", "refId": "B" },
+        { "expr": "histogram_quantile(0.99, sum(rate(kafka_producer_duration_seconds_bucket{exported_job=\"$service\"}[$__rate_interval])) by (le))", "legendFormat": "P99", "refId": "C" }
       ],
       "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "showLegend": true, "placement": "bottom", "displayMode": "table", "calcs": ["lastNotNull", "mean", "max"] } },
       "fieldConfig": { "defaults": { "unit": "s", "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2, "fillOpacity": 5 } } }

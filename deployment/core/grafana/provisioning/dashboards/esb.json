@@ -1,10 +1,10 @@
 {
   "uid": "esb-overview",
-  "title": "ESB — Overview",
+  "title": "ESB",
   "tags": ["esb"],
   "timezone": "browser",
   "schemaVersion": 38,
-  "version": 2,
+  "version": 3,
   "refresh": "30s",
   "time": { "from": "now-1h", "to": "now" },
   "templating": {
@@ -22,6 +22,52 @@
         "query": "1m,5m,10m,30m",
         "current": { "value": "5m" },
         "hide": 0
+      },
+      {
+        "name": "service",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
+        "query": "label_values(exported_job)",
+        "label": "Service",
+        "hide": 0,
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "refresh": 2,
+        "current": { "text": "All", "value": "$__all" }
+      },
+      {
+        "name": "inbound_service",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
+        "query": "label_values(http_server_request_count_total, exported_job)",
+        "label": "Inbound Service",
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "refresh": 2
+      },
+      {
+        "name": "router_service",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
+        "query": "label_values(kafka_consumer_lag, exported_job)",
+        "label": "Router Service",
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "refresh": 2
+      },
+      {
+        "name": "outbound_service",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
+        "query": "label_values(delivery_attempts_total, exported_job)",
+        "label": "Outbound Service",
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "refresh": 2
       }
     ]
   },
@@ -41,7 +87,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
       "targets": [
         {
-          "expr": "sum(rate(http_server_request_count_total{exported_job=~\".*inbound.connector.*\"}[$__rate_interval]))",
+          "expr": "sum(rate(http_server_request_count_total{exported_job=~\"$inbound_service\"}[$__rate_interval]))",
           "legendFormat": "RPS",
           "refId": "A"
         }
@@ -62,7 +108,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
       "targets": [
         {
-          "expr": "sum(kafka_consumer_lag{exported_job=~\".*router.worker.*\"})",
+          "expr": "sum(kafka_consumer_lag{exported_job=~\"$router_service\"})",
           "legendFormat": "Lag",
           "refId": "A"
         }
@@ -83,7 +129,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
       "targets": [
         {
-          "expr": "sum(kafka_consumer_lag{exported_job=~\".*outbound.connector.*\"})",
+          "expr": "sum(kafka_consumer_lag{exported_job=~\"$outbound_service\"})",
           "legendFormat": "Lag",
           "refId": "A"
         }
@@ -104,7 +150,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
       "targets": [
         {
-          "expr": "sum(rate(delivery_attempts_total{exported_job=~\".*outbound.connector.*\",delivery_result=\"success\"}[$__rate_interval])) / sum(rate(delivery_attempts_total{exported_job=~\".*outbound.connector.*\"}[$__rate_interval])) * 100",
+          "expr": "sum(rate(delivery_attempts_total{exported_job=~\"$outbound_service\",delivery_result=\"success\"}[$__rate_interval])) / sum(rate(delivery_attempts_total{exported_job=~\"$outbound_service\"}[$__rate_interval])) * 100",
           "legendFormat": "Success %",
           "refId": "A"
         }
@@ -134,27 +180,27 @@
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
       "targets": [
         {
-          "expr": "sum(rate(kafka_producer_messages_total{exported_job=~\".*inbound.connector.*\"}[$__rate_interval]))",
+          "expr": "sum(rate(kafka_producer_messages_total{exported_job=~\"$inbound_service\"}[$__rate_interval]))",
           "legendFormat": "inbound → kafka",
           "refId": "A"
         },
         {
-          "expr": "sum(rate(kafka_consumer_messages_total{exported_job=~\".*router.worker.*\"}[$__rate_interval]))",
+          "expr": "sum(rate(kafka_consumer_messages_total{exported_job=~\"$router_service\"}[$__rate_interval]))",
           "legendFormat": "router ← kafka",
           "refId": "B"
         },
         {
-          "expr": "sum(rate(kafka_producer_messages_total{exported_job=~\".*router.worker.*\"}[$__rate_interval]))",
+          "expr": "sum(rate(kafka_producer_messages_total{exported_job=~\"$router_service\"}[$__rate_interval]))",
           "legendFormat": "router → kafka",
           "refId": "C"
         },
         {
-          "expr": "sum(rate(kafka_consumer_messages_total{exported_job=~\".*outbound.connector.*\"}[$__rate_interval]))",
+          "expr": "sum(rate(kafka_consumer_messages_total{exported_job=~\"$outbound_service\"}[$__rate_interval]))",
           "legendFormat": "outbound ← kafka",
           "refId": "D"
         },
         {
-          "expr": "sum(rate(delivery_attempts_total{exported_job=~\".*outbound.connector.*\",delivery_result=\"success\"}[$__rate_interval]))",
+          "expr": "sum(rate(delivery_attempts_total{exported_job=~\"$outbound_service\",delivery_result=\"success\"}[$__rate_interval]))",
           "legendFormat": "outbound → recipient ✓",
           "refId": "E"
         }
@@ -186,22 +232,22 @@
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
       "targets": [
         {
-          "expr": "sum(rate(http_server_request_count_total{exported_job=~\".*inbound.connector.*\",http_response_status_code=~\"5..\"}[$__rate_interval]))",
+          "expr": "sum(rate(http_server_request_count_total{exported_job=~\"$inbound_service\",http_response_status_code=~\"5..\"}[$__rate_interval]))",
           "legendFormat": "inbound HTTP 5xx",
           "refId": "A"
         },
         {
-          "expr": "sum(rate(kafka_producer_errors_total{exported_job=~\".*inbound.connector.*\"}[$__rate_interval]))",
+          "expr": "sum(rate(kafka_producer_errors_total{exported_job=~\"$inbound_service\"}[$__rate_interval]))",
           "legendFormat": "inbound kafka errors",
           "refId": "B"
         },
         {
-          "expr": "sum(rate(routing_decisions_total{exported_job=~\".*router.worker.*\",routing_result!=\"success\"}[$__rate_interval]))",
+          "expr": "sum(rate(routing_decisions_total{exported_job=~\"$router_service\",routing_result!=\"success\"}[$__rate_interval]))",
           "legendFormat": "routing errors",
           "refId": "C"
         },
         {
-          "expr": "sum(rate(delivery_errors_total{exported_job=~\".*outbound.connector.*\"}[$__rate_interval]))",
+          "expr": "sum(rate(delivery_errors_total{exported_job=~\"$outbound_service\"}[$__rate_interval]))",
           "legendFormat": "delivery errors",
           "refId": "D"
         }
@@ -226,12 +272,12 @@
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
       "targets": [
         {
-          "expr": "sum(rate(routing_dlq_messages_total{exported_job=~\".*router.worker.*\"}[$__rate_interval])) by (routing_dlq_reason)",
+          "expr": "sum(rate(routing_dlq_messages_total{exported_job=~\"$router_service\"}[$__rate_interval])) by (routing_dlq_reason)",
           "legendFormat": "DLQ — {{ routing_dlq_reason }}",
           "refId": "A"
         },
         {
-          "expr": "sum(rate(routing_retries_total{exported_job=~\".*router.worker.*\"}[$__rate_interval]))",
+          "expr": "sum(rate(routing_retries_total{exported_job=~\"$router_service\"}[$__rate_interval]))",
           "legendFormat": "retries",
           "refId": "B"
         }
@@ -263,15 +309,15 @@
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum(rate(http_server_request_duration_seconds_bucket{exported_job=~\".*inbound.connector.*\"}[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.50, sum(rate(http_server_request_duration_seconds_bucket{exported_job=~\"$inbound_service\"}[$__rate_interval])) by (le))",
           "legendFormat": "P50", "refId": "A"
         },
         {
-          "expr": "histogram_quantile(0.95, sum(rate(http_server_request_duration_seconds_bucket{exported_job=~\".*inbound.connector.*\"}[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(http_server_request_duration_seconds_bucket{exported_job=~\"$inbound_service\"}[$__rate_interval])) by (le))",
           "legendFormat": "P95", "refId": "B"
         },
         {
-          "expr": "histogram_quantile(0.99, sum(rate(http_server_request_duration_seconds_bucket{exported_job=~\".*inbound.connector.*\"}[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(http_server_request_duration_seconds_bucket{exported_job=~\"$inbound_service\"}[$__rate_interval])) by (le))",
           "legendFormat": "P99", "refId": "C"
         }
       ],
@@ -286,15 +332,15 @@
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum(rate(routing_decision_duration_seconds_bucket{exported_job=~\".*router.worker.*\"}[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.50, sum(rate(routing_decision_duration_seconds_bucket{exported_job=~\"$router_service\"}[$__rate_interval])) by (le))",
           "legendFormat": "P50", "refId": "A"
         },
         {
-          "expr": "histogram_quantile(0.95, sum(rate(routing_decision_duration_seconds_bucket{exported_job=~\".*router.worker.*\"}[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(routing_decision_duration_seconds_bucket{exported_job=~\"$router_service\"}[$__rate_interval])) by (le))",
           "legendFormat": "P95", "refId": "B"
         },
         {
-          "expr": "histogram_quantile(0.99, sum(rate(routing_decision_duration_seconds_bucket{exported_job=~\".*router.worker.*\"}[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(routing_decision_duration_seconds_bucket{exported_job=~\"$router_service\"}[$__rate_interval])) by (le))",
           "legendFormat": "P99", "refId": "C"
         }
       ],
@@ -309,15 +355,15 @@
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum(rate(delivery_duration_seconds_bucket{exported_job=~\".*outbound.connector.*\"}[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.50, sum(rate(delivery_duration_seconds_bucket{exported_job=~\"$outbound_service\"}[$__rate_interval])) by (le))",
           "legendFormat": "P50", "refId": "A"
         },
         {
-          "expr": "histogram_quantile(0.95, sum(rate(delivery_duration_seconds_bucket{exported_job=~\".*outbound.connector.*\"}[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(delivery_duration_seconds_bucket{exported_job=~\"$outbound_service\"}[$__rate_interval])) by (le))",
           "legendFormat": "P95", "refId": "B"
         },
         {
-          "expr": "histogram_quantile(0.99, sum(rate(delivery_duration_seconds_bucket{exported_job=~\".*outbound.connector.*\"}[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(delivery_duration_seconds_bucket{exported_job=~\"$outbound_service\"}[$__rate_interval])) by (le))",
           "legendFormat": "P99", "refId": "C"
         }
       ],
@@ -339,16 +385,8 @@
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
       "targets": [
         {
-          "expr": "app_messages_in_flight{exported_job=~\".*inbound.connector.*\"}",
-          "legendFormat": "inbound-connector", "refId": "A"
-        },
-        {
-          "expr": "app_messages_in_flight{exported_job=~\".*router.worker.*\"}",
-          "legendFormat": "router-worker", "refId": "B"
-        },
-        {
-          "expr": "app_messages_in_flight{exported_job=~\".*outbound.connector.*\"}",
-          "legendFormat": "outbound-connector", "refId": "C"
+          "expr": "app_messages_in_flight{exported_job=~\"$service\"}",
+          "legendFormat": "{{exported_job}}", "refId": "A"
         }
       ],
       "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "showLegend": true, "placement": "bottom" } },

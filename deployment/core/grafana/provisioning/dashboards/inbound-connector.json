@@ -1,13 +1,28 @@
 {
   "uid": "esb-inbound-connector",
-  "title": "ESB — Inbound Connector",
+  "title": "Inbound Connector",
   "tags": ["esb", "inbound-connector"],
   "timezone": "browser",
   "schemaVersion": 38,
-  "version": 2,
+  "version": 3,
   "refresh": "30s",
   "time": { "from": "now-1h", "to": "now" },
-  "templating": { "list": [] },
+  "templating": {
+    "list": [
+      {
+        "name": "service",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
+        "query": "label_values(http_server_request_count_total, exported_job)",
+        "label": "Service",
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "refresh": 2,
+        "current": { "text": "", "value": "" }
+      }
+    ]
+  },
   "panels": [
     {
       "id": 1, "title": "HTTP", "type": "row",
@@ -17,7 +32,7 @@
       "id": 2, "title": "RPS", "type": "stat",
       "gridPos": { "x": 0, "y": 1, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
-      "targets": [{ "expr": "sum(rate(http_server_request_count_total{exported_job=~\".*inbound.connector.*\"}[$__rate_interval]))", "legendFormat": "RPS", "refId": "A" }],
+      "targets": [{ "expr": "sum(rate(http_server_request_count_total{exported_job=\"$service\"}[$__rate_interval]))", "legendFormat": "RPS", "refId": "A" }],
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
       "fieldConfig": { "defaults": { "unit": "reqps", "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 100 }, { "color": "red", "value": 500 }] } } }
     },
@@ -25,7 +40,7 @@
       "id": 3, "title": "HTTP Error Rate", "type": "stat",
       "gridPos": { "x": 6, "y": 1, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
-      "targets": [{ "expr": "sum(rate(http_server_request_count_total{exported_job=~\".*inbound.connector.*\",http_response_status_code=~\"5..\"}[$__rate_interval])) / sum(rate(http_server_request_count_total{exported_job=~\".*inbound.connector.*\"}[$__rate_interval])) * 100", "legendFormat": "5xx %", "refId": "A" }],
+      "targets": [{ "expr": "sum(rate(http_server_request_count_total{exported_job=\"$service\",http_response_status_code=~\"5..\"}[$__rate_interval])) / sum(rate(http_server_request_count_total{exported_job=\"$service\"}[$__rate_interval])) * 100", "legendFormat": "5xx %", "refId": "A" }],
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
       "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 1 }, { "color": "red", "value": 5 }] } } }
     },
@@ -33,7 +48,7 @@
       "id": 4, "title": "HTTP P95 Latency", "type": "stat",
       "gridPos": { "x": 12, "y": 1, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
-      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(http_server_request_duration_seconds_bucket{exported_job=~\".*inbound.connector.*\"}[$__rate_interval])) by (le))", "legendFormat": "P95", "refId": "A" }],
+      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(http_server_request_duration_seconds_bucket{exported_job=\"$service\"}[$__rate_interval])) by (le))", "legendFormat": "P95", "refId": "A" }],
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
       "fieldConfig": { "defaults": { "unit": "s", "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 0.5 }, { "color": "red", "value": 1 }] } } }
     },
@@ -41,7 +56,7 @@
       "id": 5, "title": "In-Flight", "type": "stat",
       "gridPos": { "x": 18, "y": 1, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
-      "targets": [{ "expr": "app_messages_in_flight{exported_job=~\".*inbound.connector.*\"}", "legendFormat": "In-Flight", "refId": "A" }],
+      "targets": [{ "expr": "app_messages_in_flight{exported_job=\"$service\"}", "legendFormat": "In-Flight", "refId": "A" }],
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
       "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 100 }, { "color": "red", "value": 500 }] } } }
     },
@@ -49,7 +64,7 @@
       "id": 6, "title": "Requests by Status Code", "type": "timeseries",
       "gridPos": { "x": 0, "y": 5, "w": 12, "h": 8 },
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
-      "targets": [{ "expr": "sum(rate(http_server_request_count_total{exported_job=~\".*inbound.connector.*\"}[$__rate_interval])) by (http_response_status_code, http_route)", "legendFormat": "{{http_response_status_code}} {{http_route}}", "refId": "A" }],
+      "targets": [{ "expr": "sum(rate(http_server_request_count_total{exported_job=\"$service\"}[$__rate_interval])) by (http_response_status_code, http_route)", "legendFormat": "{{http_response_status_code}} {{http_route}}", "refId": "A" }],
       "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "showLegend": true, "placement": "bottom", "displayMode": "table", "calcs": ["lastNotNull", "mean"] } },
       "fieldConfig": { "defaults": { "unit": "reqps", "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2, "fillOpacity": 8 } } }
     },
@@ -58,9 +73,9 @@
       "gridPos": { "x": 12, "y": 5, "w": 12, "h": 8 },
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
       "targets": [
-        { "expr": "histogram_quantile(0.50, sum(rate(http_server_request_duration_seconds_bucket{exported_job=~\".*inbound.connector.*\"}[$__rate_interval])) by (le, http_route))", "legendFormat": "P50 {{http_route}}", "refId": "A" },
-        { "expr": "histogram_quantile(0.95, sum(rate(http_server_request_duration_seconds_bucket{exported_job=~\".*inbound.connector.*\"}[$__rate_interval])) by (le, http_route))", "legendFormat": "P95 {{http_route}}", "refId": "B" },
-        { "expr": "histogram_quantile(0.99, sum(rate(http_server_request_duration_seconds_bucket{exported_job=~\".*inbound.connector.*\"}[$__rate_interval])) by (le, http_route))", "legendFormat": "P99 {{http_route}}", "refId": "C" }
+        { "expr": "histogram_quantile(0.50, sum(rate(http_server_request_duration_seconds_bucket{exported_job=\"$service\"}[$__rate_interval])) by (le, http_route))", "legendFormat": "P50 {{http_route}}", "refId": "A" },
+        { "expr": "histogram_quantile(0.95, sum(rate(http_server_request_duration_seconds_bucket{exported_job=\"$service\"}[$__rate_interval])) by (le, http_route))", "legendFormat": "P95 {{http_route}}", "refId": "B" },
+        { "expr": "histogram_quantile(0.99, sum(rate(http_server_request_duration_seconds_bucket{exported_job=\"$service\"}[$__rate_interval])) by (le, http_route))", "legendFormat": "P99 {{http_route}}", "refId": "C" }
       ],
       "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "showLegend": true, "placement": "bottom", "displayMode": "table", "calcs": ["lastNotNull", "mean", "max"] } },
       "fieldConfig": { "defaults": { "unit": "s", "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2, "fillOpacity": 5 } } }
@@ -73,7 +88,7 @@
       "id": 9, "title": "Produce Rate", "type": "stat",
       "gridPos": { "x": 0, "y": 14, "w": 8, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
-      "targets": [{ "expr": "sum(rate(kafka_producer_messages_total{exported_job=~\".*inbound.connector.*\",messaging_status=\"success\"}[$__rate_interval]))", "legendFormat": "msg/s", "refId": "A" }],
+      "targets": [{ "expr": "sum(rate(kafka_producer_messages_total{exported_job=\"$service\",messaging_status=\"success\"}[$__rate_interval]))", "legendFormat": "msg/s", "refId": "A" }],
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
       "fieldConfig": { "defaults": { "unit": "mps", "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] } } }
     },
@@ -81,7 +96,7 @@
       "id": 10, "title": "Produce Error Rate", "type": "stat",
       "gridPos": { "x": 8, "y": 14, "w": 8, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
-      "targets": [{ "expr": "sum(rate(kafka_producer_errors_total{exported_job=~\".*inbound.connector.*\"}[$__rate_interval]))", "legendFormat": "errors/s", "refId": "A" }],
+      "targets": [{ "expr": "sum(rate(kafka_producer_errors_total{exported_job=\"$service\"}[$__rate_interval]))", "legendFormat": "errors/s", "refId": "A" }],
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
       "fieldConfig": { "defaults": { "unit": "mps", "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 0.01 }] } } }
     },
@@ -89,7 +104,7 @@
       "id": 11, "title": "Produce P95 Latency", "type": "stat",
       "gridPos": { "x": 16, "y": 14, "w": 8, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
-      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(kafka_producer_duration_seconds_bucket{exported_job=~\".*inbound.connector.*\"}[$__rate_interval])) by (le))", "legendFormat": "P95", "refId": "A" }],
+      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(kafka_producer_duration_seconds_bucket{exported_job=\"$service\"}[$__rate_interval])) by (le))", "legendFormat": "P95", "refId": "A" }],
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
       "fieldConfig": { "defaults": { "unit": "s", "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 0.05 }, { "color": "red", "value": 0.25 }] } } }
     },
@@ -98,8 +113,8 @@
       "gridPos": { "x": 0, "y": 18, "w": 12, "h": 8 },
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
       "targets": [
-        { "expr": "sum(rate(kafka_producer_messages_total{exported_job=~\".*inbound.connector.*\"}[$__rate_interval])) by (messaging_status)", "legendFormat": "{{ messaging_status }}", "refId": "A" },
-        { "expr": "sum(rate(kafka_producer_errors_total{exported_job=~\".*inbound.connector.*\"}[$__rate_interval])) by (messaging_error_type)", "legendFormat": "error: {{ messaging_error_type }}", "refId": "B" }
+        { "expr": "sum(rate(kafka_producer_messages_total{exported_job=\"$service\"}[$__rate_interval])) by (messaging_status)", "legendFormat": "{{ messaging_status }}", "refId": "A" },
+        { "expr": "sum(rate(kafka_producer_errors_total{exported_job=\"$service\"}[$__rate_interval])) by (messaging_error_type)", "legendFormat": "error: {{ messaging_error_type }}", "refId": "B" }
       ],
       "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "showLegend": true, "placement": "bottom" } },
       "fieldConfig": { "defaults": { "unit": "mps", "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2, "fillOpacity": 8 } } }
@@ -109,9 +124,9 @@
       "gridPos": { "x": 12, "y": 18, "w": 12, "h": 8 },
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
       "targets": [
-        { "expr": "histogram_quantile(0.50, sum(rate(kafka_producer_duration_seconds_bucket{exported_job=~\".*inbound.connector.*\"}[$__rate_interval])) by (le))", "legendFormat": "P50", "refId": "A" },
-        { "expr": "histogram_quantile(0.95, sum(rate(kafka_producer_duration_seconds_bucket{exported_job=~\".*inbound.connector.*\"}[$__rate_interval])) by (le))", "legendFormat": "P95", "refId": "B" },
-        { "expr": "histogram_quantile(0.99, sum(rate(kafka_producer_duration_seconds_bucket{exported_job=~\".*inbound.connector.*\"}[$__rate_interval])) by (le))", "legendFormat": "P99", "refId": "C" }
+        { "expr": "histogram_quantile(0.50, sum(rate(kafka_producer_duration_seconds_bucket{exported_job=\"$service\"}[$__rate_interval])) by (le))", "legendFormat": "P50", "refId": "A" },
+        { "expr": "histogram_quantile(0.95, sum(rate(kafka_producer_duration_seconds_bucket{exported_job=\"$service\"}[$__rate_interval])) by (le))", "legendFormat": "P95", "refId": "B" },
+        { "expr": "histogram_quantile(0.99, sum(rate(kafka_producer_duration_seconds_bucket{exported_job=\"$service\"}[$__rate_interval])) by (le))", "legendFormat": "P99", "refId": "C" }
       ],
       "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "showLegend": true, "placement": "bottom", "displayMode": "table", "calcs": ["lastNotNull", "mean", "max"] } },
       "fieldConfig": { "defaults": { "unit": "s", "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2, "fillOpacity": 5 } } }
@@ -125,8 +140,8 @@
       "gridPos": { "x": 0, "y": 27, "w": 12, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
       "targets": [
-        { "expr": "app_starts_total{exported_job=~\".*inbound.connector.*\"}", "legendFormat": "Starts", "refId": "A" },
-        { "expr": "app_ends_total{exported_job=~\".*inbound.connector.*\"}", "legendFormat": "Ends", "refId": "B" }
+        { "expr": "app_starts_total{exported_job=\"$service\"}", "legendFormat": "Starts", "refId": "A" },
+        { "expr": "app_ends_total{exported_job=\"$service\"}", "legendFormat": "Ends", "refId": "B" }
       ],
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "none", "orientation": "horizontal" },
       "fieldConfig": { "defaults": { "unit": "short" } }
@@ -135,7 +150,7 @@
       "id": 16, "title": "Request Body Size P95", "type": "timeseries",
       "gridPos": { "x": 12, "y": 27, "w": 12, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
-      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(http_server_request_body_size_bytes_bucket{exported_job=~\".*inbound.connector.*\"}[$__rate_interval])) by (le))", "legendFormat": "P95 size", "refId": "A" }],
+      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(http_server_request_body_size_bytes_bucket{exported_job=\"$service\"}[$__rate_interval])) by (le))", "legendFormat": "P95 size", "refId": "A" }],
       "options": { "tooltip": { "mode": "single" }, "legend": { "showLegend": false } },
       "fieldConfig": { "defaults": { "unit": "bytes", "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 1, "fillOpacity": 10 } } }
     }
