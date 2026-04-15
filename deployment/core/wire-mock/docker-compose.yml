@@ -10,6 +10,10 @@ services:
       - ./mappings:/home/wiremock/mappings:ro
     command:
       - --global-response-templating
+      - --disable-banner
+      - --no-request-journal
+    environment:
+      - JAVA_OPTS=-Xms256m -Xmx512m -XX:+UseG1GC -XX:+UseStringDeduplication
     networks:
       - esb_network
     healthcheck:
@@ -21,5 +25,5 @@ services:
     deploy:
       resources:
         limits:
-          memory: 256M
-          cpus: "0.5"
+          memory: 512M
+          cpus: "1.0"

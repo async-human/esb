@@ -11,7 +11,6 @@ import (
 
 type Metrics struct {
 	App      shared.App
-	Consumer shared.KafkaConsumer
 	Producer shared.KafkaProducer
 	Routing  shared.Routing
 }
@@ -22,14 +21,13 @@ func Init() error {
 	meter := otel.Meter(config.CommonAppConfig().App.ServiceName())
 
 	app,      e1 := shared.NewApp(meter)
-	consumer, e2 := shared.NewKafkaConsumer(meter)
 	producer, e3 := shared.NewKafkaProducer(meter)
 	routing,  e4 := shared.NewRouting(meter)
 
-	if err := errors.Join(e1, e2, e3, e4); err != nil {
+	if err := errors.Join(e1, e3, e4); err != nil {
 		return fmt.Errorf("router-worker metrics: %w", err)
 	}
 
-	ServiceMetrics = Metrics{app, consumer, producer, routing}
+	ServiceMetrics = Metrics{app, producer, routing}
 	return nil
 }

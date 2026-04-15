@@ -3,7 +3,7 @@ package env
 import "github.com/caarlos0/env/v11"
 
 type appEnvConfig struct {
-	AppName string `env:"APP_SERVICE_NAME" envDefault:"router-worker"`
+	AppName string `env:"APP_NAME" envDefault:"router-worker"`
 	AppEnv  string `env:"APP_ENV" envDefault:"development"`
 }
 

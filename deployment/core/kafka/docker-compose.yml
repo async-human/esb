@@ -19,12 +19,15 @@ services:
       - KAFKA_LOG_DIRS=/var/lib/kafka/data
 
       - CLUSTER_ID=${KAFKA_CLUSTER_ID:-5L6g3nShT-eMCtK--X86sw}
+      - KAFKA_OPTS=-javaagent:/opt/jmx-exporter/jmx_prometheus_javaagent.jar=9404:/opt/jmx-exporter/kafka-jmx-config.yml
     ports:
       - "${KAFKA_BROKER_PORT:-9092}:9092"
+      - "9404:9404"
     networks:
       - esb_network
     volumes:
       - kafka_data:/var/lib/kafka/data
+      - ./jmx-exporter:/opt/jmx-exporter:ro
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest

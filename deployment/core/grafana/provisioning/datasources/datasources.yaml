@@ -10,4 +10,10 @@ datasources:
       timeInterval: "15s"
       exemplarTraceIdDestinations:
         - name: trace_id
-          datasourceUid: tempo-esb
+          datasourceUid: jaeger-esb
+
+  - name: Jaeger
+    type: jaeger
+    uid: jaeger-esb
+    access: proxy
+    url: http://jaeger:16686

@@ -19,15 +19,6 @@ func (s *service) HandleMessage(ctx context.Context, message kafka.Message) erro
 	metrics.ServiceMetrics.App.InFlight.Add(ctx, 1)
 	defer metrics.ServiceMetrics.App.InFlight.Add(ctx, -1)
 
-	// Сообщение получено из Kafka
-	metrics.ServiceMetrics.Consumer.MessagesTotal.Add(ctx, 1,
-		otelmetric.WithAttributes(
-			attribute.String("messaging.system", "kafka"),
-			attribute.String("messaging.topic", message.Topic),
-			attribute.Int("messaging.partition", int(message.Partition)),
-		),
-	)
-
 	modelMsg, err := s.consumerDecoder.Decode(message.Value)
 	if err != nil {
 		logger.Error(ctx, "Failed to decode message", zap.Error(err))

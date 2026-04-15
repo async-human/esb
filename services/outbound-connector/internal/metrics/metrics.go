@@ -11,7 +11,6 @@ import (
 
 type Metrics struct {
 	App      shared.App
-	Consumer shared.KafkaConsumer
 	Delivery shared.Delivery
 }
 
@@ -21,13 +20,12 @@ func Init() error {
 	meter := otel.Meter(config.CommonAppConfig().App.ServiceName())
 
 	app,      e1 := shared.NewApp(meter)
-	consumer, e2 := shared.NewKafkaConsumer(meter)
 	delivery, e3 := shared.NewDelivery(meter)
 
-	if err := errors.Join(e1, e2, e3); err != nil {
+	if err := errors.Join(e1, e3); err != nil {
 		return fmt.Errorf("outbound-connector metrics: %w", err)
 	}
 
-	ServiceMetrics = Metrics{app, consumer, delivery}
+	ServiceMetrics = Metrics{app, delivery}
 	return nil
 }

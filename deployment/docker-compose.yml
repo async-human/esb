@@ -6,6 +6,7 @@ include:
   - core/grafana/docker-compose.yml
   - core/jaeger/docker-compose.yml
   - core/kafka/docker-compose.yml
+  - core/kafka-exporter/docker-compose.yml
   - core/postgres/docker-compose.yml
   - core/prometheus/docker-compose.yml
   - core/otel/docker-compose.yml

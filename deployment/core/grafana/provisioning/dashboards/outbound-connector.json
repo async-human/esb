@@ -4,7 +4,7 @@
   "tags": ["esb", "outbound-connector"],
   "timezone": "browser",
   "schemaVersion": 38,
-  "version": 3,
+  "version": 4,
   "refresh": "30s",
   "time": { "from": "now-1h", "to": "now" },
   "templating": {
@@ -20,6 +20,18 @@
         "multi": false,
         "refresh": 2,
         "current": { "text": "", "value": "" }
+      },
+      {
+        "name": "consumer_group",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
+        "query": "label_values(kafka_consumergroup_lag, consumergroup)",
+        "label": "Consumer Group",
+        "hide": 0,
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": false,
+        "refresh": 2
       },
       {
         "name": "endpoint",
@@ -41,18 +53,22 @@
       "gridPos": { "x": 0, "y": 0, "w": 24, "h": 1 }, "collapsed": false
     },
     {
-      "id": 2, "title": "Consumer Lag", "type": "stat",
+      "id": 2, "title": "Consumer Lag",
+      "description": "Источник: kafka-exporter (kafka_consumer_group_lag). Реальный lag с брокера.",
+      "type": "stat",
       "gridPos": { "x": 0, "y": 1, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
-      "targets": [{ "expr": "sum(kafka_consumer_lag{exported_job=\"$service\"})", "legendFormat": "Lag", "refId": "A" }],
+      "targets": [{ "expr": "sum(kafka_consumergroup_lag{consumergroup=~\"$consumer_group\"})", "legendFormat": "Lag", "refId": "A" }],
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
       "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 1000 }, { "color": "red", "value": 10000 }] } } }
     },
     {
-      "id": 3, "title": "Consume Rate", "type": "stat",
+      "id": 3, "title": "Consume Rate",
+      "description": "Источник: kafka-exporter. rate(current_offset) = скорость потребления.",
+      "type": "stat",
       "gridPos": { "x": 6, "y": 1, "w": 6, "h": 4 },
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
-      "targets": [{ "expr": "sum(rate(kafka_consumer_messages_total{exported_job=\"$service\"}[$__rate_interval]))", "legendFormat": "msg/s", "refId": "A" }],
+      "targets": [{ "expr": "sum(rate(kafka_consumergroup_current_offset{consumergroup=~\"$consumer_group\"}[$__rate_interval]))", "legendFormat": "msg/s", "refId": "A" }],
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
       "fieldConfig": { "defaults": { "unit": "mps", "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] } } }
     },
@@ -73,18 +89,21 @@
       "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "yellow", "value": 95 }, { "color": "green", "value": 99 }] } } }
     },
     {
-      "id": 6, "title": "Consumer Lag по топикам", "type": "timeseries",
+      "id": 6, "title": "Consumer Lag по топикам и партициям",
+      "description": "kafka_consumer_group_lag — точный lag с kafka-exporter.",
+      "type": "timeseries",
       "gridPos": { "x": 0, "y": 5, "w": 12, "h": 8 },
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
-      "targets": [{ "expr": "sum(kafka_consumer_lag{exported_job=\"$service\"}) by (messaging_topic, messaging_partition)", "legendFormat": "{{ messaging_topic }} [p{{ messaging_partition }}]", "refId": "A" }],
+      "targets": [{ "expr": "kafka_consumergroup_lag{consumergroup=~\"$consumer_group\"}", "legendFormat": "{{ topic }} [p{{ partition }}] {{ consumergroup }}", "refId": "A" }],
       "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "showLegend": true, "placement": "bottom", "displayMode": "table", "calcs": ["lastNotNull", "max"] } },
       "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2, "fillOpacity": 10 } } }
     },
     {
-      "id": 7, "title": "Consumer Rate", "type": "timeseries",
+      "id": 7, "title": "Consume Rate по топикам",
+      "type": "timeseries",
       "gridPos": { "x": 12, "y": 5, "w": 12, "h": 8 },
       "datasource": { "type": "prometheus", "uid": "prometheus-esb" },
-      "targets": [{ "expr": "sum(rate(kafka_consumer_messages_total{exported_job=\"$service\"}[$__rate_interval])) by (messaging_topic)", "legendFormat": "{{ messaging_topic }}", "refId": "A" }],
+      "targets": [{ "expr": "sum(rate(kafka_consumergroup_current_offset{consumergroup=~\"$consumer_group\"}[$__rate_interval])) by (topic, consumergroup)", "legendFormat": "{{ topic }} / {{ consumergroup }}", "refId": "A" }],
       "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "showLegend": true, "placement": "bottom" } },
       "fieldConfig": { "defaults": { "unit": "mps", "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2, "fillOpacity": 8 } } }
     },

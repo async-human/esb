@@ -4,8 +4,8 @@ import { check, sleep } from 'k6';
 // Настройки нагрузки
 export const options = {
   stages:[
-    { duration: '30s', target: 50 },  // Разгон до 50 виртуальных юзеров за 30 сек
-    { duration: '1m', target: 50 },   // Держим полку в 50 юзеров 1 минуту
+    { duration: '30s', target: 10000 },  // Разгон до 50 виртуальных юзеров за 30 сек
+    { duration: '1m', target: 10000 },   // Держим полку в 50 юзеров 1 минуту
     { duration: '30s', target: 0 },   // Плавное снижение до 0
   ],
 };

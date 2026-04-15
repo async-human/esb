@@ -1,0 +1,99 @@
+---
+# JMX Prometheus Exporter config for Apache Kafka
+# Jar: https://github.com/prometheus/jmx_exporter/releases
+# Скачать: jmx_prometheus_javaagent-1.1.0.jar → переименовать в jmx_prometheus_javaagent.jar
+# Положить в: core/kafka/jmx-exporter/
+
+startDelaySeconds: 0
+ssl: false
+lowercaseOutputName: true
+lowercaseOutputLabelNames: true
+
+rules:
+  # ─── Broker: сообщений в/из брокера ──────────────────────────
+  - pattern: 'kafka.server<type=BrokerTopicMetrics, name=MessagesInPerSec, topic=(.+)><>Count'
+    name: kafka_broker_messages_in_total
+    labels:
+      topic: "$1"
+    help: "Total messages received by broker per topic"
+    type: COUNTER
+
+  - pattern: 'kafka.server<type=BrokerTopicMetrics, name=BytesInPerSec, topic=(.+)><>Count'
+    name: kafka_broker_bytes_in_total
+    labels:
+      topic: "$1"
+    help: "Total bytes received per topic"
+    type: COUNTER
+
+  - pattern: 'kafka.server<type=BrokerTopicMetrics, name=BytesOutPerSec, topic=(.+)><>Count'
+    name: kafka_broker_bytes_out_total
+    labels:
+      topic: "$1"
+    help: "Total bytes sent per topic"
+    type: COUNTER
+
+  # ─── Produce requests ────────────────────────────────────────
+  - pattern: 'kafka.network<type=RequestMetrics, name=RequestsPerSec, request=Produce><>Count'
+    name: kafka_broker_produce_requests_total
+    help: "Total produce requests"
+    type: COUNTER
+
+  - pattern: 'kafka.network<type=RequestMetrics, name=TotalTimeMs, request=Produce><>(\w+)'
+    name: kafka_broker_produce_request_duration_ms
+    labels:
+      quantile: "$1"
+    help: "Produce request duration in ms"
+    type: GAUGE
+
+  - pattern: 'kafka.network<type=RequestMetrics, name=ErrorsPerSec, request=Produce, error=(.+)><>Count'
+    name: kafka_broker_produce_errors_total
+    labels:
+      error: "$1"
+    help: "Produce errors by type"
+    type: COUNTER
+
+  # ─── Fetch (consumer) requests ───────────────────────────────
+  - pattern: 'kafka.network<type=RequestMetrics, name=RequestsPerSec, request=FetchConsumer><>Count'
+    name: kafka_broker_fetch_requests_total
+    help: "Total fetch requests from consumers"
+    type: COUNTER
+
+  - pattern: 'kafka.network<type=RequestMetrics, name=TotalTimeMs, request=FetchConsumer><>(\w+)'
+    name: kafka_broker_fetch_request_duration_ms
+    labels:
+      quantile: "$1"
+    help: "Fetch request duration in ms"
+    type: GAUGE
+
+  # ─── Under-replicated / ISR ──────────────────────────────────
+  - pattern: 'kafka.server<type=ReplicaManager, name=UnderReplicatedPartitions><>Value'
+    name: kafka_broker_under_replicated_partitions
+    help: "Number of under-replicated partitions"
+    type: GAUGE
+
+  - pattern: 'kafka.server<type=ReplicaManager, name=PartitionCount><>Value'
+    name: kafka_broker_partition_count
+    help: "Total partition count on this broker"
+    type: GAUGE
+
+  - pattern: 'kafka.server<type=ReplicaManager, name=LeaderCount><>Value'
+    name: kafka_broker_leader_count
+    help: "Number of partitions this broker is leader for"
+    type: GAUGE
+
+  # ─── Log / Disk ──────────────────────────────────────────────
+  - pattern: 'kafka.log<type=LogManager, name=OfflineLogDirectoryCount><>Value'
+    name: kafka_broker_offline_log_directories
+    help: "Number of offline log directories"
+    type: GAUGE
+
+  # ─── Network handler pool ────────────────────────────────────
+  - pattern: 'kafka.network<type=SocketServer, name=NetworkProcessorAvgIdlePercent><>Value'
+    name: kafka_broker_network_processor_idle_percent
+    help: "Network processor idle percentage (1.0 = fully idle)"
+    type: GAUGE
+
+  - pattern: 'kafka.server<type=KafkaRequestHandlerPool, name=RequestHandlerAvgIdlePercent><>Value'
+    name: kafka_broker_request_handler_idle_percent
+    help: "Request handler idle percentage"
+    type: GAUGE
